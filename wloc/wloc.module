@@ -5,7 +5,7 @@
 #!category=Tools
 
 [Script]
-Apple WLOC = type=http-response,pattern=^https?:\/\/(?:gs-loc(?:-cn)?\.apple\.com|gsp-ssl\.ls\.apple\.com|bluedot\.is\.autonavi\.com(?:\.gds\.alibabadns\.com)?)\/clls\/wloc,requires-body=1,binary-body-mode=1,max-size=0,timeout=30,script-path=https://qq3490158.github.io/v/wloc/wloc.js,argument=longitude=null&latitude=null&accuracy=25&randomRadius=0&logLevel=info
+Apple WLOC = type=http-response,pattern=^https?:\/\/(?:gs-loc(?:-cn)?\.apple\.com|gsp-ssl\.ls\.apple\.com|bluedot\.is\.autonavi\.com(?:\.gds\.alibabadns\.com)?)\/clls\/wloc,requires-body=1,binary-body-mode=1,max-size=0,timeout=30,script-path=https://qq3490158.github.io/v/wloc/wloc.js,argument=accuracy=25&randomRadius=0&logLevel=info
 WLOC Settings = type=http-request,pattern=^https?:\/\/gs-loc(-cn)?\.apple\.com\/wloc-settings\/save,requires-body=0,max-size=0,timeout=10,script-path=https://qq3490158.github.io/v/wloc/wloc-settings.js
 
 [MITM]
