@@ -484,6 +484,16 @@ body{background:#F3F5F9!important;color:#121A24!important}
 .row.tight .btn svg{width:15px;height:15px}
 .pick-chip{font-size:13px!important;letter-spacing:.2px!important;min-height:40px!important;border-radius:12px!important}
 .coords{font-size:13px!important}
+
+
+/* v6.2 窄屏（≤430px）适配：保证三个按钮文字不被挤 */
+@media screen and (max-width:430px){
+  .row.tight .btn{font-size:12.5px!important;letter-spacing:0!important;padding:0 2px!important;gap:0!important;min-height:46px!important}
+  .row.tight .btn svg{display:none!important}
+  .pick-chip{font-size:12px!important;letter-spacing:0!important}
+  .coords{font-size:12.5px!important}
+  .card h3{letter-spacing:1px!important}
+}
 </style>
 </head>
 <body>
