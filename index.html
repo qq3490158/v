@@ -417,6 +417,73 @@ body{
   font-size:13.5px;letter-spacing:.2px;border-radius:13px}
 .row.tight .btn-wide{gap:5px}
 .btn-wide svg{width:15px;height:15px}
+
+
+/* ============ v6 扁平化重绘（主色沿用 1 站 #3E9BFF） ============ */
+html,body{background-image:none!important}
+body{background:#F3F5F9!important;color:#121A24!important}
+.app-header{padding:16px 18px 13px!important}
+.app-header .logo{border-radius:10px!important;border:1px solid #E1E7F0!important;box-shadow:none!important}
+
+/* 地图 */
+#map{border:1px solid #E1E7F0!important;border-radius:16px!important;box-shadow:none!important}
+#map::after{box-shadow:none!important;background:none!important}
+#map .leaflet-control-zoom{background:#fff!important;border:1px solid #E1E7F0!important;border-radius:10px!important;box-shadow:none!important;overflow:hidden!important}
+#map .leaflet-control-zoom a{background:#fff!important;box-shadow:none!important;color:#33404F!important}
+#map .leaflet-control-zoom a:active{background:#F2F5FA!important}
+#map .leaflet-control-scale{background:#fff!important;border:1px solid #E1E7F0!important;box-shadow:none!important;border-radius:8px!important}
+.map-note{background:rgba(255,255,255,.96)!important;border:1px solid #E1E7F0!important;border-radius:10px!important;box-shadow:none!important}
+
+/* 图层切换 */
+.layer-switch{background:#fff!important;border:1px solid #E1E7F0!important;border-radius:12px!important;box-shadow:none!important;padding:3px!important}
+.layer-btn{border-radius:9px!important;font-size:12.5px!important;color:#4A5666!important}
+.layer-btn.active{background:#3E9BFF!important;color:#fff!important;box-shadow:none!important}
+
+/* 面板与卡片 */
+.panel{background:#fff!important;border:1px solid #E4E9F1!important;border-radius:16px!important;box-shadow:none!important;margin:12px 14px 0!important}
+.card{padding:15px 16px 16px!important}
+.card h3{color:#6B7787!important;font-weight:600!important}
+.card h3::before{background:#3E9BFF!important;border-radius:2px!important;width:3px!important;height:12px!important;top:1px!important}
+
+/* 坐标条 */
+.coords{background:#121A24!important;border:0!important;border-radius:12px!important;box-shadow:none!important;min-height:46px!important}
+
+/* 按钮 */
+.btn{border-radius:12px!important;box-shadow:none!important}
+.btn-primary{background:#3E9BFF!important;border-color:#3E9BFF!important;color:#fff!important}
+.btn-primary:active{background:#2E8BF0!important;transform:none!important;box-shadow:none!important}
+.btn-secondary,.btn-chip,.pick-chip{background:#F4F7FB!important;border-color:#E1E7F0!important;color:#25313F!important}
+.btn-secondary:active,.btn-chip:active,.pick-chip:active{background:#E9EFF7!important}
+.pick-chip-danger{background:#fff!important;border-color:#F6D8D2!important;color:#E04A33!important}
+.pick-chip-danger:active{background:#FFF5F2!important}
+.btn.success{background:#34C759!important;border-color:#34C759!important;color:#fff!important;box-shadow:none!important}
+.row.tight .btn{min-height:47px!important;font-size:13.5px!important}
+
+/* 快捷地点标签 */
+.quick-head{color:#8794A5!important}
+.quick-head::after{background:#E7ECF4!important}
+.quick-head span{background:none!important}
+
+/* 输入 */
+.input-row input{background:#fff!important;border:1px solid #E1E7F0!important;border-radius:11px!important;box-shadow:none!important;color:#121A24!important}
+.input-row input:focus{border-color:#3E9BFF!important;box-shadow:0 0 0 3px rgba(62,155,255,.15)!important;background:#fff!important}
+.input-row .btn{border-radius:11px!important;padding:12px 15px!important}
+
+/* 收藏 / 当前 */
+.fav-item,.active-loc{background:#F7F9FC!important;border-color:#E6EBF3!important;box-shadow:none!important;border-radius:12px!important}
+
+/* 提示 */
+.error-banner{background:#FFF6F4!important;border-color:#F5D6CF!important;color:#C0392B!important;box-shadow:none!important;border-radius:12px!important}
+.toast{background:#121A24!important;box-shadow:none!important;border-radius:12px!important}
+.modal{border:1px solid #E4E9F1!important;box-shadow:0 14px 40px rgba(16,28,44,.12)!important;border-radius:16px!important}
+
+
+/* v6.1 细调 */
+.card h3{color:#5A6779!important;font-size:12px!important;letter-spacing:1.4px!important}
+.row.tight .btn{font-size:14px!important;letter-spacing:.3px!important}
+.row.tight .btn svg{width:15px;height:15px}
+.pick-chip{font-size:13px!important;letter-spacing:.2px!important;min-height:40px!important;border-radius:12px!important}
+.coords{font-size:13px!important}
 </style>
 </head>
 <body>
