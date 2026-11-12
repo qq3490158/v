@@ -494,26 +494,36 @@ body{background:#F3F5F9!important;color:#121A24!important}
   .coords{font-size:12.5px!important}
   .card h3{letter-spacing:1px!important}
 }
+
+
+/* v6.3 把双击缩放彻底固定住（manipulation 允许拖动与双指缩放，只禁双击放大） */
+html,body,#map,.leaflet-container,.leaflet-pane,.leaflet-tile{touch-action:manipulation!important}
+*{-webkit-touch-callout:none}
 </style>
 </head>
 <body>
 <script>
-/* 锁定页面缩放：iOS Safari 会忽略 user-scalable=no，这里用事件拦截兜底 */
+/* 锁定页面缩放：iOS Safari 忽略 user-scalable=no，这里三重兜底 */
 (function () {
-  var block = function (e) { e.preventDefault(); };
+  var block = function (e) { if (e.cancelable) e.preventDefault(); };
   document.addEventListener('gesturestart', block, { passive: false });
   document.addEventListener('gesturechange', block, { passive: false });
   document.addEventListener('gestureend', block, { passive: false });
   document.addEventListener('touchmove', function (e) {
-    if (e.touches && e.touches.length > 1) e.preventDefault();
+    if (e.touches && e.touches.length > 1 && e.cancelable) e.preventDefault();
   }, { passive: false });
-  var lastTap = 0;
+  document.addEventListener('dblclick', block, { passive: false });
+
+  var lastTap = 0, lastX = 0, lastY = 0;
   document.addEventListener('touchend', function (e) {
-    var t = e.target;
-    if (t && t.closest && t.closest('#map')) return;
+    var pt = e.changedTouches && e.changedTouches[0];
     var now = Date.now();
-    if (now - lastTap < 320) e.preventDefault();
-    lastTap = now;
+    var x = pt ? pt.clientX : -999, y = pt ? pt.clientY : -999;
+    var gap = now - lastTap;
+    if (gap > 0 && gap < 330 && Math.abs(x - lastX) < 32 && Math.abs(y - lastY) < 32) {
+      if (e.cancelable) e.preventDefault();
+    }
+    lastTap = now; lastX = x; lastY = y;
   }, { passive: false });
 })();
 </script>
