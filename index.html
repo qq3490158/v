@@ -375,6 +375,33 @@ body{
   box-shadow:inset 0 1px 0 rgba(255,255,255,.30),0 2px 7px rgba(52,199,89,.28)!important
 }
 
+
+
+/* ---- 按钮区重排（v5.1） ---- */
+.row.tight{margin-top:12px;gap:0}
+.row.mt10{margin-top:10px}
+.btn-wide{flex:none;width:100%;min-height:52px;font-size:15.5px;letter-spacing:.4px}
+.btn-wide svg{width:17px;height:17px}
+.quick-head{display:flex;align-items:center;gap:9px;margin:15px 0 9px}
+.quick-head span{flex:none;font-size:10px;font-weight:600;letter-spacing:1.7px;color:#8CA0B5}
+.quick-head::after{content:"";flex:1;height:1px;
+  background:linear-gradient(90deg,#E3EAF3,rgba(227,234,243,0))}
+.quick-row{display:flex;gap:8px}
+.pick-chip{flex:1;min-width:0;min-height:39px;padding:0 8px;border-radius:11px;
+  border:1px solid #D6E0EC;background:linear-gradient(180deg,#FCFDFF,#F0F4FA);
+  color:#35506C;font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer;
+  box-shadow:inset 0 1px 0 #fff;transition:transform .1s ease,background .15s ease}
+.pick-chip:active{transform:scale(.97);background:#E7EFF8}
+.pick-chip-danger{flex:none;min-width:62px;color:#BC432A;border-color:#EFCFC2;
+  background:linear-gradient(180deg,#FFFDFC,#FFF5F0)}
+.pick-chip-danger:active{background:#FCEAE2}
+
+
+/* ---- v5.2 微调：间距与尺寸 ---- */
+.row.tight{margin-top:14px}
+.btn-wide{min-height:54px;font-size:16px;border-radius:15px}
+.quick-head{margin:16px 0 10px}
+.pick-chip{min-height:40px;border-radius:12px}
 </style>
 </head>
 <body>
@@ -427,17 +454,18 @@ body{
     <h3>选择目标位置</h3>
     <div class="coords" id="coords">当前所在位置</div>
     <div class="row tight">
-      <button class="btn btn-primary" id="saveBtn" onclick="save()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s7-6.1 7-11a7 7 0 1 0-14 0c0 4.9 7 11 7 11z"/><circle cx="12" cy="10" r="2.3"/></svg>储存到设备</button>
+      <button class="btn btn-primary btn-wide" id="saveBtn" onclick="save()"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s7-6.1 7-11a7 7 0 1 0-14 0c0 4.9 7 11 7 11z"/><circle cx="12" cy="10" r="2.3"/></svg>储存到设备</button>
     </div>
-    <div class="row">
+    <div class="row mt10">
       <button class="btn btn-secondary" onclick="addFav()">收藏位置</button>
       <button class="btn btn-secondary" onclick="locateMe()">当前位置</button>
     </div>
-    <div class="row">
-      <button class="btn btn-chip" onclick="goPlace(1)">总部</button>
-      <button class="btn btn-chip" onclick="goPlace(2)">北区</button>
-      <button class="btn btn-chip" onclick="goPlace(3)">东区</button>
-      <button class="btn btn-chip btn-danger" onclick="clearLocation()">清除</button>
+    <div class="quick-head"><span>快捷地点</span></div>
+    <div class="quick-row">
+      <button class="pick-chip" onclick="goPlace(1)">总部</button>
+      <button class="pick-chip" onclick="goPlace(2)">北区</button>
+      <button class="pick-chip" onclick="goPlace(3)">东区</button>
+      <button class="pick-chip pick-chip-danger" onclick="clearLocation()">清除</button>
     </div>
   </div>
 
