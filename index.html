@@ -409,6 +409,14 @@ body{
 .btn-wide{width:auto;flex:none;min-width:196px;max-width:100%;padding:0 30px;margin:0 auto}
 .pick-chip{flex:1 1 0;min-width:0}
 .pick-chip-danger{flex:1 1 0;min-width:0;max-width:none}
+
+
+/* ---- v5.5：三按钮同一排等宽 ---- */
+.row.tight{margin-top:14px;gap:8px}
+.row.tight .btn{flex:1 1 0;min-width:0;padding:0 4px;min-height:47px;
+  font-size:13.5px;letter-spacing:.2px;border-radius:13px}
+.row.tight .btn-wide{gap:5px}
+.btn-wide svg{width:15px;height:15px}
 </style>
 </head>
 <body>
@@ -461,9 +469,7 @@ body{
     <h3>选择目标位置</h3>
     <div class="coords" id="coords">当前所在位置</div>
     <div class="row tight">
-      <button class="btn btn-primary btn-wide" id="saveBtn" onclick="save()"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s7-6.1 7-11a7 7 0 1 0-14 0c0 4.9 7 11 7 11z"/><circle cx="12" cy="10" r="2.3"/></svg>储存到设备</button>
-    </div>
-    <div class="row mt10">
+      <button class="btn btn-primary btn-wide" id="saveBtn" onclick="save()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s7-6.1 7-11a7 7 0 1 0-14 0c0 4.9 7 11 7 11z"/><circle cx="12" cy="10" r="2.3"/></svg>储存到设备</button>
       <button class="btn btn-secondary" onclick="addFav()">收藏位置</button>
       <button class="btn btn-secondary" onclick="locateMe()">当前位置</button>
     </div>
