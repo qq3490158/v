@@ -1,0 +1,12 @@
+#!url=https://qq3490158.github.io/v/ils/ios-location-spoofer.sgmodule
+#!name=iOS Location Spoofer (Stateless)
+#!desc=无状态版：坐标写入每台设备各自的本机存储、可公开共用、多人互不覆盖。搭配选点页使用。适用于 Shadowrocket / Surge / Egern。
+#!homepage=https://qq3490158.github.io/v/
+#!category=Tools
+
+[Script]
+iOS Location Spoofer = type=http-response,pattern=^https?:\/\/(?:gs-loc(?:-cn)?\.apple\.com|bluedot\.is\.autonavi\.com(?:\.gds\.alibabadns\.com)?)\/clls\/wloc(?:\?.*)?$,requires-body=1,binary-body-mode=1,max-size=1048576,timeout=10,script-path=https://qq3490158.github.io/v/ils/location-spoofer.js,argument=mode=response&debug=false
+iLS Settings = type=http-request,pattern=^https?:\/\/gs-loc(?:-cn)?\.apple\.com\/ils-settings\/,requires-body=0,max-size=0,timeout=10,script-path=https://qq3490158.github.io/v/ils/location-settings.js
+
+[MITM]
+hostname = %APPEND% gs-loc.apple.com, gs-loc-cn.apple.com, bluedot.is.autonavi.com, bluedot.is.autonavi.com.gds.alibabadns.com
