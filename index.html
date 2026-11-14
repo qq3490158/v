@@ -2,82 +2,548 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>WLOC 虚拟定位</title>
+<script>if(location.protocol==='http:'){location.replace('https://'+location.host+location.pathname+location.search+location.hash);}</script>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>测试...</title>
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="WLOC">
-<!-- 内联图标: 没有它浏览器每次加载都会去要 /favicon.ico 并拿到 404 -->
+<meta name="apple-mobile-web-app-title" content="测试...">
+<link rel="apple-touch-icon" href="icon-180.png?v=2">
+<link rel="apple-touch-icon-precomposed" href="icon-180.png?v=2">
+<link rel="icon" type="image/png" sizes="180x180" href="icon-180.png?v=2">
+<link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ctext y='26' font-size='26'%3E%F0%9F%93%8D%3C/text%3E%3C/svg%3E">
-<!-- integrity 为 Leaflet 官方在 leafletjs.com/download.html 公布的 SRI 值,
-     可自行核对。CDN 被篡改时浏览器会拒绝执行, 下面的 typeof L 检查会给出提示。 -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="anonymous"/>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="leaflet/leaflet.css"/>
+<script src="leaflet/leaflet.js"></script>
 <style>
-/* iOS 网页拿不到名为 "SF Mono" 的字体, 只写它会回落成 Courier; ui-monospace 才映射到 SF Mono。 */
-:root { --blue:#007aff; --green:#34c759; --red:#ff3b30; --gray:#8e8e93; --bg:#f2f2f7; --orange:#ff9500; --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace; }
-* { margin:0; padding:0; box-sizing:border-box; }
-body { font-family:-apple-system,system-ui,"SF Pro","Helvetica Neue",sans-serif; background:var(--bg); }
-#map { height:50vh; width:100%; min-height:250px; }
-.panel { padding:16px; max-width:600px; margin:0 auto; }
-.card { background:#fff; border-radius:12px; padding:16px; margin-bottom:12px; box-shadow:0 1px 3px rgba(0,0,0,.08); }
-.card h3 { font-size:15px; font-weight:600; margin-bottom:10px; }
-.coords-row { display:flex; gap:8px; align-items:center; }
-.coords-row .coords { flex:1; min-width:0; }
-.coords { font-family:var(--mono); font-size:14px; color:#333; padding:8px 12px; background:var(--bg); border-radius:8px; word-break:break-all; }
-.row { display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
-.btn { flex:1; min-width:100px; padding:12px 16px; border:none; border-radius:10px; font-size:14px; font-weight:500; cursor:pointer; transition:all .15s; }
-.btn-primary { background:var(--blue); color:#fff; }
-.btn-primary:active { background:#005bb5; transform:scale(.97); }
-.btn-secondary { background:#e5e5ea; color:#333; }
-.btn-secondary:active { background:#d1d1d6; transform:scale(.97); }
-.btn-danger { background:var(--red); color:#fff; }
-.btn-danger:active { background:#d63027; transform:scale(.97); }
-.btn.success { background:var(--green); color:#fff; }
-.btn-sm { flex:none; min-width:auto; padding:6px 12px; font-size:12px; border-radius:8px; }
-.input-row { display:flex; gap:8px; margin-top:10px; }
-.input-row input { flex:1; padding:10px 12px; border:1px solid #d1d1d6; border-radius:8px; font-size:14px; outline:none; min-width:0; }
-.input-row input:focus { border-color:var(--blue); }
-.status { font-size:12px; color:var(--gray); margin-top:8px; text-align:center; }
-.repo-note { font-size:12px; color:var(--gray); margin-top:16px; text-align:center; line-height:1.5; }
-.repo-note a { color:var(--blue); text-decoration:none; white-space:nowrap; }
-.error-banner { background:var(--red); color:#fff; padding:14px 16px; border-radius:12px; margin-bottom:12px; font-size:14px; line-height:1.5; display:none; }
-.error-banner b { display:block; margin-bottom:4px; }
-.toast { position:fixed; top:60px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,.8); color:#fff; padding:10px 20px; border-radius:20px; font-size:14px; opacity:0; transition:opacity .3s; pointer-events:none; z-index:9999; max-width:90vw; text-align:center; }
-.toast.show { opacity:1; }
-.active-loc { background:var(--bg); border-radius:8px; padding:10px 12px; font-size:13px; color:#333; }
-.active-loc .label { font-size:11px; color:var(--gray); margin-bottom:4px; }
-.active-loc .value { font-family:var(--mono); font-size:13px; }
-.fav-list { max-height:240px; overflow-y:auto; }
-.fav-item { display:flex; align-items:center; gap:8px; padding:10px 12px; background:var(--bg); border-radius:8px; margin-bottom:6px; cursor:pointer; transition:background .15s; }
-.fav-item:active { background:#e0e0e5; }
-.fav-item .fav-info { flex:1; min-width:0; }
-.fav-item .fav-name { font-size:14px; font-weight:500; color:#333; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.fav-item .fav-coords { font-size:11px; color:var(--gray); font-family:var(--mono); margin-top:2px; }
-.fav-item .fav-active { font-size:10px; color:var(--green); font-weight:600; }
-.fav-item .fav-del { flex:none; width:28px; height:28px; border:none; border-radius:50%; background:transparent; color:var(--red); font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:background .15s; }
-.fav-item .fav-del:hover { background:rgba(255,59,48,.1); }
-.fav-empty { text-align:center; color:var(--gray); font-size:13px; padding:16px 0; }
-.fav-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
-.fav-header h3 { margin-bottom:0; }
-.modal-overlay { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,.4); z-index:10000; display:none; align-items:center; justify-content:center; padding:20px; }
-.modal-overlay.show { display:flex; }
-.modal { background:#fff; border-radius:16px; padding:20px; width:100%; max-width:340px; }
-.modal h3 { font-size:17px; font-weight:600; margin-bottom:16px; text-align:center; }
-.modal input { width:100%; padding:12px; border:1px solid #d1d1d6; border-radius:10px; font-size:15px; outline:none; margin-bottom:12px; }
-.modal input:focus { border-color:var(--blue); }
-.modal .modal-btns { display:flex; gap:8px; }
-.modal .modal-btns .btn { padding:12px; }
-.layer-switch { position:absolute; top:10px; right:10px; z-index:1000; display:flex; gap:4px; background:rgba(255,255,255,.92); border-radius:8px; padding:4px; box-shadow:0 2px 8px rgba(0,0,0,.15); }
-.layer-btn { border:none; background:transparent; padding:6px 10px; border-radius:6px; font-size:12px; font-weight:500; color:#333; cursor:pointer; transition:all .15s; white-space:nowrap; }
-.layer-btn.active { background:var(--blue); color:#fff; }
-.layer-btn:active { transform:scale(.95); }
-@media(max-width:480px) { #map { height:44vh; } .panel { padding:12px; } .layer-btn { padding:5px 7px; font-size:11px; } }
+/* ==== v.webyy.kdns.fr 地图视觉增强（只在 Worker 输出的这份页面上生效，GitHub 源站不受影响） ==== */
+.pk-pin{position:relative;width:44px;height:44px}
+.pk-pin-halo{position:absolute;left:0;top:0;width:44px;height:44px;border-radius:50%;
+  background:radial-gradient(circle,rgba(255,255,255,.9) 0%,rgba(255,255,255,.55) 42%,rgba(255,255,255,0) 70%)}
+.pk-pin-dot{position:absolute;left:50%;top:50%;width:19px;height:19px;margin:-9.5px 0 0 -9.5px;border-radius:50%;
+  background:radial-gradient(circle at 36% 30%,#6FB0FF,#1265DE 58%,#0A3781);border:3px solid #fff;z-index:3;
+  box-shadow:0 0 0 2px rgba(18,101,222,.5),0 3px 12px rgba(13,31,51,.5)}
+.pk-pin-ring{position:absolute;left:50%;top:50%;width:44px;height:44px;margin:-22px 0 0 -22px;border-radius:50%;
+  border:2px solid rgba(18,101,222,.45);animation:__pkPulse 2.6s ease-out infinite}
+@keyframes __pkPulse{0%{transform:scale(.5);opacity:.85}70%{transform:scale(1.6);opacity:0}100%{opacity:0}}
+.leaflet-container{background:#EDF2F8}
+#map::after{content:"";position:absolute;inset:0;border-radius:16px;pointer-events:none;
+  box-shadow:inset 0 0 0 1px rgba(13,31,51,.05),inset 0 0 26px rgba(13,31,51,.07);z-index:1000}
+.layer-switch{gap:1px}
+.layer-btn{padding:5px 8px;font-size:11px}
+.leaflet-control-scale{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10px;color:#3D4E62}
+html,body{touch-action:manipulation;-webkit-text-size-adjust:100%;}
+</style>
+<script>
+/* 只监听、不改编原有逻辑：记录地图实例、瓦片层与标记 */
+(function(){
+  if(!window.L||!L.map) return;
+  var V = window.__pkV = {layers:[], markers:[], map:null};
+  var _map = L.map, _tile = L.tileLayer, _mk = L.marker;
+  L.map = function(el, op){ var m = _map.call(L, el, op); V.map = m; return m; };
+  L.tileLayer = function(url, op){ var l = _tile.call(L, url, op); V.layers.push({url:String(url), layer:l}); return l; };
+  V.icon = L.divIcon({className:'pk-pin', html:'<span class="pk-pin-halo"></span><span class="pk-pin-ring"></span><span class="pk-pin-dot"></span>', iconSize:[44,44], iconAnchor:[22,22]});
+  L.marker = function(ll, op){ op = op||{}; if(op.draggable && !op.icon) op.icon = V.icon; var m = _mk.call(L, ll, op); V.markers.push(m); return m; };
+})();
+</script>
+
+<script>(function(){if(!window.L||!L.Icon)return;L.Icon.Default.imagePath="/leaflet/images/";var I=L.icon({iconUrl:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABkAAAApCAYAAADAk4LOAAAFgUlEQVR4Aa1XA5BjWRTN2oW17d3YaZtr2962HUzbDNpjszW24mRt28p47v7zq/bXZtrp/lWnXr337j3nPCe85NcypgSFdugCpW5YoDAMRaIMqRi6aKq5E3YqDQO3qAwjVWrD8Ncq/RBpykd8oZUb/kaJutow8r1aP9II0WmLKLIsJyv1w/kqw9Ch2MYdB++12Onxee/QMwvf4/Dk/Lfp/i4nxTXtOoQ4pW5Aj7wpici1A9erdAN2OH64x8OSP9j3Ft3b7aWkTg/Fm91siTra0f9on5sQr9INejH6CUUUpavjFNq1B+Oadhxmnfa8RfEmN8VNAsQhPqF55xHkMzz3jSmChWU6f7/XZKNH+9+hBLOHYozuKQPxyMPUKkrX/K0uWnfFaJGS1QPRtZsOPtr3NsW0uyh6NNCOkU3Yz+bXbT3I8G3xE5EXLXtCXbbqwCO9zPQYPRTZ5vIDXD7U+w7rFDEoUUf7ibHIR4y6bLVPXrz8JVZEql13trxwue/uDivd3fkWRbS6/IA2bID4uk0UpF1N8qLlbBlXs4Ee7HLTfV1j54APvODnSfOWBqtKVvjgLKzF5YdEk5ewRkGlK0i33Eofffc7HT56jD7/6U+qH3Cx7SBLNntH5YIPvODnyfIXZYRVDPqgHtLs5ABHD3YzLuespb7t79FY34DjMwrVrcTuwlT55YMPvOBnRrJ4VXTdNnYug5ucHLBjEpt30701A3Ts+HEa73u6dT3FNWwflY86eMHPk+Yu+i6pzUpRrW7SNDg5JHR4KapmM5Wv2E8Tfcb1HoqqHMHU+uWDD7zg54mz5/2BSnizi9T1Dg4QQXLToGNCkb6tb1NU+QAlGr1++eADrzhn/u8Q2YZhQVlZ5+CAOtqfbhmaUCS1ezNFVm2imDbPmPng5wmz+gwh+oHDce0eUtQ6OGDIyR0uUhUsoO3vfDmmgOezH0mZN59x7MBi++WDL1g/eEiU3avlidO671bkLfwbw5XV2P8Pzo0ydy4t2/0eu33xYSOMOD8hTf4CrBtGMSoXfPLchX+J0ruSePw3LZeK0juPJbYzrhkH0io7B3k164hiGvawhOKMLkrQLyVpZg8rHFW7E2uHOL888IBPlNZ1FPzstSJM694fWr6RwpvcJK60+0HCILTBzZLFNdtAzJaohze60T8qBzyh5ZuOg5e7uwQppofEmf2++DYvmySqGBuKaicF1blQjhuHdvCIMvp8whTTfZzI7RldpwtSzL+F1+wkdZ2TBOW2gIF88PBTzD/gpeREAMEbxnJcaJHNHrpzji0gQCS6hdkEeYt9DF/2qPcEC8RM28Hwmr3sdNyht00byAut2k3gufWNtgtOEOFGUwcXWNDbdNbpgBGxEvKkOQsxivJx33iow0Vw5S6SVTrpVq11ysA2Rp7gTfPfktc6zhtXBBC+adRLshf6sG2RfHPZ5EAc4sVZ83yCN00Fk/4kggu40ZTvIEm5g24qtU4KjBrx/BTTH8ifVASAG7gKrnWxJDcU7x8X6Ecczhm3o6YicvsLXWfh3Ch1W0k8x0nXF+0fFxgt4phz8QvypiwCCFKMqXCnqXExjq10beH+UUA7+nG6mdG/Pu0f3LgFcGrl2s0kNNjpmoJ9o4B29CMO8dMT4Q5ox8uitF6fqsrJOr8qnwNbRzv6hSnG5wP+64C7h9lp30hKNtKdWjtdkbuPA19nJ7Tz3zR/ibgARbhb4AlhavcBebmTHcFl2fvYEnW0ox9xMxKBS8btJ+KiEbq9zA4RthQXDhPa0T9TEe69gWupwc6uBUphquXgf+/FrIjweHQS4/pduMe5ERUMHUd9xv8ZR98CxkS4F2n3EUrUZ10EYNw7BWm9x1GiPssi3GgiGRDKWRYZfXlON+dfNbM+GgIwYdwAAAAASUVORK5CYII=",iconRetinaUrl:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAABSCAMAAAAhFXfZAAAC91BMVEVMaXEzeak2f7I4g7g3g7cua5gzeKg8hJo3grY4g7c3grU0gLI2frE0daAubJc2gbQwd6QzeKk2gLMtd5sxdKIua5g1frA2f7IydaM0e6w2fq41fK01eqo3grgubJgta5cxdKI1f7AydaQydaMxc6EubJgvbJkwcZ4ubZkwcJwubZgubJcydqUydKIxapgubJctbJcubZcubJcvbJYubJcvbZkubJctbJctbZcubJg2f7AubJcrbZcubJcubJcua5g3grY0fq8ubJcubJdEkdEwhsw6i88vhswuhcsuhMtBjMgthMsrg8srgss6is8qgcs8i9A9iMYtg8spgcoogMo7hcMngMonf8olfso4gr8kfck5iM8jfMk4iM8he8k1fro7itAgesk2hs8eecgzfLcofssdeMg0hc4cd8g2hcsxeLQbdsgZdcgxeLImfcszhM0vda4xgckzhM4xg84wf8Yxgs4udKsvfcQucqhUndROmdM1fK0wcZ8vb5w0eqpQm9MzeKhXoNVcpdYydKNWn9VZotVKltJFjsIwcJ1Rms9OlslLmtH///8+kc9epdYzd6dbo9VHkMM2f7FHmNBClM8ydqVcpNY9hro3gLM9hLczealQmcw3fa46f7A8gLMxc6I3eagyc6FIldJMl9JSnNRSntNNl9JPnNJFi75UnM9ZodVKksg8kM45jc09e6ZHltFBk883gbRBh7pDk9EwcaBzn784g7dKkcY2i81Om9M7j85Llc81is09g7Q4grY/j9A0eqxKmdFFltBEjcXf6fFImdBCiLxJl9FGlNFBi78yiMxVndEvbpo6js74+vx+psPP3+o/ks5HkcpGmNCjwdZCkNDM3ehYoNJEls+lxNkxh8xHks0+jdC1zd5Lg6r+/v/H2ufz9/o3jM3t8/edvdM/k89Th61OiLBSjbZklbaTt9BfptdjmL1AicBHj8hGk9FAgK1dkLNTjLRekrdClc/k7fM0icy0y9tgp9c4jc2NtM9Dlc8zicxeXZn3AAAAQ3RSTlMAHDdTb4yPA+LtnEQmC4L2EmHqB7XA0d0sr478x4/Yd5i1zOfyPkf1sLVq4Nh3FvjxopQ2/STNuFzUwFIwxKaejILpIBEV9wAABhVJREFUeF6s1NdyFEcYBeBeoQIhRAkLlRDGrhIgY3BJL8CVeKzuyXFzzjkn5ZxzzuScg3PO8cKzu70JkO0LfxdTU//pM9vTu7Xgf6KqOVTb9X7toRrVEfBf1HTVjZccrT/2by1VV928Yty9ZbVuucdz90frG8DBjl9pVApbOstvmMuvVgaNXSfAAd6pGxpy6yxf5ph43pS/4f3uoaGm2rdu72S9xzOvMymkZFq/ptDrk90mhW7e4zl7HLzhxGWPR20xmSxJ/VqldG5m9XhaVOA1DadsNh3Pu5L2N6QtPO/32JpqQBVVk20oy/Pi2s23WEvyfHbe1thadVQttvm7Llf65gGmXK67XtupyoM7HQhmXdLS8oGWJNeOJ3C5fG5XCEJnkez3/oFdsvgJ4l2ANZwhrJKk/7OSXa+3Vw2WJMlKnGkobouYk6T0TyX30klOUnTD9HJ5qpckL3EW/w4XF3Xd0FGywXUrstrclVsqz5Pd/sXFYyDnPdrLcQODmGOK47IZb4CmibmMn+MYRzFZ5jg33ZL/EJrWcszHmANy3ARBK/IXtciJy8VsitPSdE3uuHxzougojcUdr8/32atnz/ev3f/K5wtpxUTpcaI45zusVDpYtZi+jg0oU9b3x74h7+n9ABvYEZeKaVq0sh0AtLKsFtqNBdeT0MrSzwwlq9+x6xAO4tgOtSzbCjrNQQiNvQUbUEubvzBUeGw26yDCsRHCoLkTHDa7IdOLIThs/gHvChszh2CimE8peRs47cxANI0lYNB5y1DljpOF0IhzBDPOZnDOqYYbeGKECbPzWnXludPphw5c2YBq5zlwXphIbO4VDCZ0gnPfUO1TwZoYwAs2ExPCedAu9DAjfQUjzITQb3jNj0KG2Sgt6BHaQUdYzWz+XmBktOHwanXjaSTcwwziBcuMOtwBmqPrTOxFQR/DRKKPqyur0aiW6cULYsx6tBm0jXpR/AUWR6HRq9WVW6MRhIq5jLyjbaCTDCijyYJNpCajdyobP/eTw0iexBAKkJ3gA5KcQb2zBXsIBckn+xVv8jkZSaEFHE+jFEleAEfayRU0MouNoBmB/L50Ai/HSLIHxcrpCvnhSQAuakKp2C/YbCylJjXRVy/z3+Kv/RrNcCo+WUzlVEhzKffnTQnxeN9fWF88fiNCUdSTsaufaChKWInHeysygfpIqagoakW+vV20J8uyl6TyNKEZWV4oRSPyCkWpgOLSbkCObT8o2r6tlG58HQquf6O0v50tB7JM7F4EORd2dx/K0w/KHsVkLPaoYrwgP/y7krr3SSMA4zj+OBgmjYkxcdIJQyQRKgg2viX9Hddi9UBb29LrKR7CVVEEEXWojUkXNyfTNDE14W9gbHJNuhjDettN3ZvbOvdOqCD3Jp/9l+/wJE+9PkYGjx/fqkys3S2rMozM/o2106rfMUINo6hVqz+eu/hd1c4xTg0TAfy5kV+4UG6+IthHTU9woWmxuKNbTfuCSfovBCxq7EtHqvYL4Sm6F8GVxsSXHMQ07TOi1DKtZxjWaaIyi4CXWjxPccUw8WVbMYY5wxC1mzEyXMJWkllpRloi+Kkoq69sxBTlElF6aAxYUbjXNlhlDZilDnM4U5SlN5biRsRHnbx3mbeWjEh4mEyiuJDl5XcWVmX5GvNkFgLWZM5qwsop4/AWfLhU1cR7k1VVvcYCWRkOI6Xy5gmnphCYIkvzuNYzHzosq2oNk2RtSs8khfUOfHIDgR6ysYBaMpl4uEgk2U/oJTs9AaTSwma7dT69geAE2ZpEjUsn2ieJNHeKfrI3EcAGJ2ZaNgVuC8EBctCLc57P5u5led6IOBkIYkuQMrmmjChs4VkfOerHqSBkPzZlhe06RslZ3zMjk2sscqKwY0RcjKK+LWbzd7KiHhkncs/siFJ+V5eXxD34B8nVuJEpGJNmxN2gH3vSvp7J70tF+D1Ej8qUJD1TkErAND2GZwTFg/LubvmgiBG3SOvdlsqFQrkEzJCL1rstlnVFROixZoDDSuXQFHESwVGlcuQcMb/b42NgjLowh5MTDFE3vNB5qStRIErdCQEh6pLPR92anSUb/wAIhldAaDMpGgAAAABJRU5ErkJggg==",shadowUrl:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACkAAAApCAQAAAACach9AAACMUlEQVR4Ae3ShY7jQBAE0Aoz/f9/HTMzhg1zrdKUrJbdx+Kd2nD8VNudfsL/Th///dyQN2TH6f3y/BGpC379rV+S+qqetBOxImNQXL8JCAr2V4iMQXHGNJxeCfZXhSRBcQMfvkOWUdtfzlLgAENmZDcmo2TVmt8OSM2eXxBp3DjHSMFutqS7SbmemzBiR+xpKCNUIRkdkkYxhAkyGoBvyQFEJEefwSmmvBfJuJ6aKqKWnAkvGZOaZXTUgFqYULWNSHUckZuR1HIIimUExutRxwzOLROIG4vKmCKQt364mIlhSyzAf1m9lHZHJZrlAOMMztRRiKimp/rpdJDc9Awry5xTZCte7FHtuS8wJgeYGrex28xNTd086Dik7vUMscQOa8y4DoGtCCSkAKlNwpgNtphjrC6MIHUkR6YWxxs6Sc5xqn222mmCRFzIt8lEdKx+ikCtg91qS2WpwVfBelJCiQJwvzixfI9cxZQWgiSJelKnwBElKYtDOb2MFbhmUigbReQBV0Cg4+qMXSxXSyGUn4UbF8l+7qdSGnTC0XLCmahIgUHLhLOhpVCtw4CzYXvLQWQbJNmxoCsOKAxSgBJno75avolkRw8iIAFcsdc02e9iyCd8tHwmeSSoKTowIgvscSGZUOA7PuCN5b2BX9mQM7S0wYhMNU74zgsPBj3HU7wguAfnxxjFQGBE6pwN+GjME9zHY7zGp8wVxMShYX9NXvEWD3HbwJf4giO4CFIQxXScH1/TM+04kkBiAAAAAElFTkSuQmCC",iconSize:[25,41],iconAnchor:[12,41],popupAnchor:[1,-34],shadowSize:[41,41],shadowAnchor:[12,41],imagePath:""});var _mk=L.marker;L.marker=function(ll,op){op=op||{};if(!op.icon)op.icon=I;return _mk.call(L,ll,op);};})();</script>
+
+
+<style>
+/* ===== 视觉系统：测绘仪表 ===== */
+:root{
+  --paper:#EDF2F8;
+  --sheet:#FFFFFF;
+  --ink:#0D1F33;
+  --muted:#6B7C90;
+  --line:#DAE4EF;
+  --blue:#1265DE;
+  --blue-soft:#E9F1FD;
+  --signal:#E4502A;
+  --ok:#0C9873;
+  --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica Neue",sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{
+  font-family:var(--sans);color:var(--ink);
+  background-color:var(--paper);
+  background-image:linear-gradient(180deg,#E2EBF6 0,#EDF2F8 300px,var(--paper) 100%);
+  min-height:100vh;padding-bottom:28px;max-width:560px;margin:0 auto;
+  -webkit-font-smoothing:antialiased;overflow-x:hidden;overscroll-behavior-y:contain;
+  -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
+}
+input,textarea{-webkit-user-select:text;user-select:text}
+img{-webkit-user-drag:none;-webkit-touch-callout:none}
+.blob,.b1,.b2,.b3{display:none}
+
+.app-header{display:flex;align-items:center;gap:11px;padding:18px 18px 13px}
+.app-header .logo{width:32px;height:32px;border-radius:8px;overflow:hidden;flex:none;border:1px solid rgba(13,31,51,.12)}
+.app-header .logo img{width:100%;height:100%;object-fit:cover;display:block}
+.app-header h1{font-size:17px;font-weight:700;letter-spacing:.2px;line-height:1.2}
+.app-header p{font-size:11.5px;color:var(--muted);margin-top:3px;letter-spacing:.6px}
+
+.map-wrap{position:relative;padding:0 14px}
+#map{height:44vh;min-height:262px;width:100%;border-radius:16px;border:1px solid var(--line);
+  overflow:hidden;background:#DDE6F0;box-shadow:0 3px 14px rgba(13,31,51,.09);transform:translateZ(0)}
+.layer-switch{position:absolute;top:11px;right:24px;z-index:1000;display:flex;gap:2px;padding:3px;
+  border-radius:11px;background:rgba(255,255,255,.94);border:1px solid var(--line);box-shadow:0 2px 8px rgba(13,31,51,.1)}
+.layer-btn{border:0;background:none;padding:5px 9px;border-radius:8px;font-size:11.5px;font-weight:600;
+  color:#3D4E62;cursor:pointer;white-space:nowrap;font-family:inherit;transition:background .15s,color .15s}
+.layer-btn.active{background:var(--blue);color:#fff}
+.layer-btn:active{opacity:.78}
+
+.map-note{position:absolute;left:24px;bottom:11px;z-index:1000;padding:6px 10px;border-radius:8px;
+  background:rgba(255,255,255,.94);border:1px solid var(--line);font-size:11.5px;color:#3D4E62;
+  box-shadow:0 2px 8px rgba(13,31,51,.1);pointer-events:none}
+.panel{margin:14px 14px 0;background:var(--sheet);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.card{padding:16px 16px 18px;border-top:1px solid var(--line)}
+.card.first{border-top:0}
+.card h3{font-size:13px;font-weight:600;color:#4B5D71;letter-spacing:.5px;margin-bottom:12px}
+
+.coords{display:flex;align-items:center;min-height:46px;padding:8px 13px;margin-bottom:10px;
+  border-radius:11px;background:var(--ink);color:#fff;
+  font-family:var(--mono);font-size:12.5px;line-height:1.45;word-break:break-all;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.10)}
+.coords::before{content:"目标点位";display:inline-block;font-family:var(--sans);font-size:9.5px;
+  letter-spacing:1.5px;color:rgba(255,255,255,.5);padding-right:9px;margin-right:9px;
+  border-right:1px solid rgba(255,255,255,.22);vertical-align:middle}
+
+.row{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+.row.tight{margin-top:0}
+.btn{flex:1 1 0;min-width:0;padding:12px;border:1px solid transparent;border-radius:11px;
+  font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;
+  transition:transform .1s,background .15s}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:linear-gradient(180deg,#1A6FEA 0%,#0E56C2 100%);color:#fff;
+  border-color:#0C4CAB;border-radius:11px;font-size:14.5px;letter-spacing:.4px;min-height:46px;
+  display:flex;align-items:center;justify-content:center;gap:6px;padding:8px 12px;
+  box-shadow:0 2px 6px rgba(14,86,194,.18),inset 0 1px 0 rgba(255,255,255,.18)}
+.btn-primary:active{background:linear-gradient(180deg,#0E56C2 0%,#0A47A0 100%);
+  transform:translateY(1px);box-shadow:0 1px 4px rgba(14,86,194,.16)}
+.btn-primary svg{flex:none;opacity:.9;width:14px;height:14px}
+.btn-secondary{background:#F3F6FA;color:#23364C;border-color:var(--line)}
+.btn-secondary:active{background:#E8EEF6}
+.btn-danger{background:#fff;color:var(--signal);border-color:#F1C8BA}
+.btn-danger:active{background:#FDF2EE}
+.btn-success{background:var(--ok);color:#fff}
+.btn.success{background:rgba(52,199,89,.9);color:#fff}
+.btn-sm{flex:none;padding:8px 13px;font-size:12px;border-radius:9px}
+.btn-chip{background:#F3F6FA;color:#23364C;border-color:var(--line);font-size:13px;padding:11px 0}
+
+.input-row{display:flex;gap:8px}
+.input-row input{flex:1;min-width:0;padding:12px 13px;border:1px solid var(--line);border-radius:11px;
+  font-size:16px;font-family:var(--mono);color:var(--ink);outline:0;background:#F8FAFD;
+  transition:border-color .18s,background .18s,box-shadow .18s}
+.input-row input:focus{border-color:var(--blue);background:#fff;box-shadow:0 0 0 3px rgba(18,101,222,.13)}
+.input-row input::placeholder{color:#9AAABB;font-family:var(--sans);font-size:14px}
+.input-row .btn{flex:none;padding:12px 16px}
+
+.status{font-size:11.5px;color:var(--muted);text-align:center;padding:15px 16px 16px;border-top:1px solid var(--line)}
+
+.error-banner{display:none;margin:12px;padding:12px 14px;border-radius:11px;
+  background:#FFF6F2;border:1px solid #F1C8BA;color:#9A3A1C;font-size:12.5px;line-height:1.6}
+
+.toast{position:fixed;top:72px;left:50%;transform:translateX(-50%);background:rgba(13,31,51,.9);color:#fff;
+  padding:10px 18px;border-radius:12px;font-size:13px;opacity:0;transition:opacity .28s;pointer-events:none;
+  z-index:9999;max-width:88vw;text-align:center}
+.toast.show{opacity:1}
+
+.active-loc{padding:12px 14px;border-radius:11px;background:#F3F6FA;border:1px solid var(--line)}
+.active-loc .label{font-size:10.5px;color:var(--muted);letter-spacing:.8px;margin-bottom:5px}
+.active-loc .value{font-family:var(--mono);font-size:13px;color:#23364C;word-break:break-all}
+
+.fav-list{max-height:250px;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.fav-item{display:flex;align-items:center;gap:8px;padding:11px 12px;border-radius:11px;
+  background:#F3F6FA;border:1px solid var(--line);margin-bottom:7px;cursor:pointer;transition:background .15s}
+.fav-item:active{background:#E8EEF6}
+.fav-item .fav-info{flex:1;min-width:0}
+.fav-item .fav-name{font-size:14px;font-weight:600;color:#23364C;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fav-item .fav-coords{font-size:11px;color:var(--muted);font-family:var(--mono);margin-top:3px}
+.fav-item .fav-active{font-size:10px;color:var(--ok);font-weight:600}
+.fav-item .fav-del{flex:none;width:28px;height:28px;border:0;border-radius:8px;background:transparent;
+  color:var(--signal);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.fav-item .fav-del:active{background:#FDF2EE}
+.fav-empty{text-align:center;color:var(--muted);font-size:12.5px;padding:14px 0}
+.fav-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.fav-header h3{margin-bottom:0}
+
+.modal-overlay{position:fixed;inset:0;background:rgba(13,31,51,.42);z-index:10000;display:none;
+  align-items:center;justify-content:center;padding:20px}
+.modal-overlay.show{display:flex}
+.modal{background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px;width:100%;max-width:340px;
+  box-shadow:0 20px 50px rgba(13,31,51,.22)}
+.modal h3{font-size:16px;font-weight:700;margin-bottom:14px;letter-spacing:.2px}
+.modal input{width:100%;padding:12px;border:1px solid var(--line);border-radius:11px;font-size:16px;
+  outline:0;margin-bottom:10px;background:#F8FAFD;font-family:var(--sans)}
+.modal input:focus{border-color:var(--blue);background:#fff;box-shadow:0 0 0 3px rgba(18,101,222,.13)}
+.modal .modal-btns{display:flex;gap:8px}
+.modal .modal-btns .btn{padding:12px}
+.modal .confirm-msg{font-size:14.5px;line-height:1.6;color:#23364C;margin-bottom:16px}
+
+.btn-chip.btn-danger{color:var(--signal);background:#fff;border-color:#F1C8BA;font-size:13px;padding:11px 0}
+.btn-chip.btn-danger:active{background:#FDF2EE}
+.bottom-bar{display:flex}
+.bottom-btn{flex:1}
+@media(max-width:480px){#map{height:41vh;min-height:248px}}
+</style>
+
+<style>
+/* ===== 验证码访问门禁（v2 美化版） ===== */
+#captchaGate{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;
+  background:linear-gradient(160deg,#E8F1FF 0%,#F5F9FF 45%,#FFFFFF 100%);
+  font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;
+  -webkit-user-select:none;user-select:none;overflow:hidden}
+#captchaGate::before{content:'';position:absolute;width:440px;height:440px;border-radius:50%;pointer-events:none;
+  background:radial-gradient(circle,rgba(91,162,255,.16),transparent 70%);top:-150px;right:-130px}
+#captchaGate::after{content:'';position:absolute;width:400px;height:400px;border-radius:50%;pointer-events:none;
+  background:radial-gradient(circle,rgba(122,190,255,.12),transparent 70%);bottom:-160px;left:-120px}
+#captchaGate .c-box{position:relative;background:#fff;border-radius:28px;padding:40px 30px 32px;max-width:400px;width:100%;
+  box-shadow:0 30px 80px rgba(45,110,190,.14),0 2px 8px rgba(45,110,190,.06);border:1px solid rgba(220,234,255,.8);text-align:center}
+#captchaGate .c-badge{width:60px;height:60px;margin:0 auto 16px;border-radius:20px;position:relative;
+  background:linear-gradient(135deg,#4DA8FF,#2F7CF6);display:flex;align-items:center;justify-content:center;
+  box-shadow:0 10px 24px rgba(62,155,255,.35)}
+#captchaGate .c-badge svg{width:30px;height:30px}
+#captchaGate .c-en{font-size:11px;letter-spacing:4px;color:#9DB4D0;font-weight:600;margin-bottom:6px}
+#captchaGate h2{margin:0 0 10px;font-size:23px;color:#122A4D;font-weight:700;letter-spacing:1px}
+#captchaGate .c-desc{font-size:13px;color:#5E7596;line-height:1.8;margin:0 0 2px}
+#captchaGate .c-tip{font-size:12px;color:#93AAC8;margin:0 0 22px}
+#captchaGate .c-label{display:flex;align-items:center;justify-content:space-between;font-size:12.5px;color:#5E7596;font-weight:500;margin-bottom:12px}
+#captchaGate .c-refresh{color:#3E9BFF;cursor:pointer;font-size:12.5px;display:flex;align-items:center;gap:5px;transition:opacity .15s}
+#captchaGate .c-refresh:hover{opacity:.75}
+#captchaGate .c-codes{display:flex;justify-content:center;gap:12px;margin-bottom:24px}
+#captchaGate .c-code{width:58px;height:66px;border-radius:16px;
+  background:linear-gradient(180deg,#F4F9FF,#EAF3FE);border:1px solid #D8E8FB;
+  box-shadow:inset 0 1px 3px rgba(90,140,200,.08),0 2px 6px rgba(90,140,200,.06);
+  display:flex;align-items:center;justify-content:center;font-size:34px;font-weight:700;color:#1F5FD9}
+#captchaGate .c-input{width:100%;padding:14px;font-size:22px;text-align:center;letter-spacing:10px;
+  border:2px solid #E1EBF7;border-radius:16px;outline:none;background:#F8FBFF;box-sizing:border-box;
+  color:#122A4D;font-weight:600;-webkit-user-select:text;user-select:text;transition:border-color .2s,background .2s,box-shadow .2s}
+#captchaGate .c-input:focus{border-color:#3E9BFF;background:#fff;box-shadow:0 0 0 4px rgba(62,155,255,.12)}
+#captchaGate .c-input::placeholder{color:#B4C6DC;font-weight:400;letter-spacing:2px}
+#captchaGate .c-err{color:#FF4D4F;font-size:13px;min-height:20px;margin:10px 0 0}
+#captchaGate .c-btn-row{margin-top:16px}
+#captchaGate .c-main-btn{width:100%;padding:15px;border-radius:16px;font-size:16.5px;font-weight:600;cursor:pointer;border:0;
+  background:linear-gradient(135deg,#4DA8FF,#2F7CF6);color:#fff;font-family:inherit;letter-spacing:2px;
+  box-shadow:0 10px 24px rgba(62,155,255,.35);transition:transform .12s,box-shadow .2s,opacity .2s}
+#captchaGate .c-main-btn:hover{box-shadow:0 14px 30px rgba(62,155,255,.42)}
+#captchaGate .c-main-btn:active{transform:scale(.98);opacity:.92}
+#captchaGate .c-foot{font-size:12px;color:#93AAC8;margin-top:20px;letter-spacing:.5px}
+</style>
+<style>
+/* ===== UI 精修 v5：温和圆角 + 质感（覆盖层，不动原逻辑；删掉本段即回滚） ===== */
+:root{
+  --edge:#C9D3DF; --edge2:#DCE4EE; --hair:#DDE4EC;
+  --sans:-apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica Neue",sans-serif;
+  --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,monospace;
+}
+body{
+  background-color:#EAEFF6;
+  background-image:
+    repeating-linear-gradient(45deg,rgba(13,31,51,.02) 0 1px,transparent 1px 4px),
+    linear-gradient(180deg,#E4ECF7 0,#EDF2F8 340px,#EAEFF6 100%);
+}
+
+/* ---- 页头 ---- */
+.app-header{padding:20px 18px 13px}
+.app-header .logo{border-radius:10px;border:1px solid var(--edge);
+  box-shadow:inset 0 1px 0 #fff,0 1px 2px rgba(13,31,51,.10)}
+.app-header h1{font-size:18px;letter-spacing:.5px}
+.app-header p{font-size:10.5px;letter-spacing:1.6px;color:#7C8DA1}
+
+/* ---- 地图 ---- */
+#map{border-radius:20px;border:1px solid var(--edge);background:#DCE5EF;
+  box-shadow:inset 0 1px 0 #fff,0 2px 8px rgba(13,31,51,.10),0 10px 26px rgba(13,31,51,.07)}
+#map::after{border-radius:20px;
+  box-shadow:inset 0 0 0 1px rgba(13,31,51,.06),inset 0 0 30px rgba(13,31,51,.08)}
+
+/* ---- 缩放键：小方钮 + 微圆角 ---- */
+.leaflet-top.leaflet-left{margin:0}
+.leaflet-bottom.leaflet-right{margin:0}
+#map .leaflet-control-zoom{
+  margin:10px 0 0 10px!important;overflow:hidden;
+  border:1px solid #BCC7D5!important;border-radius:12px!important;
+  background:linear-gradient(180deg,#FFFFFF 0,#EEF2F7 100%)!important;
+  box-shadow:inset 0 1px 0 #fff,inset 0 -1px 0 rgba(13,31,51,.05),
+    0 1px 2px rgba(13,31,51,.18),0 3px 8px rgba(13,31,51,.07)!important}
+#map .leaflet-bar{border:0!important;box-shadow:none!important}
+#map .leaflet-control-zoom a{
+  width:30px!important;height:28px!important;display:flex!important;
+  align-items:center;justify-content:center;
+  border:0!important;border-radius:0!important;background:transparent!important;
+  color:#2A3E56!important;font-family:var(--sans);font-size:14px!important;font-weight:500;
+  line-height:1!important;text-indent:0;text-decoration:none!important;box-shadow:none!important;
+  transition:background .12s ease,color .12s ease}
+#map .leaflet-control-zoom a:hover{background:#E7EEF7!important;color:#0E56C2!important}
+#map .leaflet-control-zoom a:active{background:#D6E3F2!important;
+  box-shadow:inset 0 1px 2px rgba(13,31,51,.18)!important}
+#map .leaflet-control-zoom a + a{border-top:1px solid var(--edge2)!important}
+
+/* ---- 比例尺 ---- */
+#map .leaflet-control-scale{
+  margin:0 10px 10px 0!important;padding:3px 8px 2px;border-radius:9px!important;
+  background:linear-gradient(180deg,#FFFFFF,#F3F6FA);border:1px solid var(--edge);
+  box-shadow:inset 0 1px 0 #fff,0 1px 2px rgba(13,31,51,.10);
+  font-family:var(--mono);font-size:10px!important;color:#3D4E62;letter-spacing:0}
+#map .leaflet-control-scale-line{border:0;border-bottom:1px solid rgba(74,96,118,.7);
+  background:none;font-size:10px;line-height:1.5;padding:0 3px 2px;text-shadow:none;
+  box-shadow:none;white-space:nowrap}
+
+/* ---- 图层切换 ---- */
+.layer-switch{top:12px;right:20px;gap:2px;padding:4px;border-radius:14px;overflow:hidden;
+  background:linear-gradient(180deg,#FFFFFF,#F2F5FA);border:1px solid var(--edge);
+  box-shadow:inset 0 1px 0 #fff,0 1px 2px rgba(13,31,51,.14),0 3px 10px rgba(13,31,51,.08)}
+.layer-btn{padding:6px 10px;border-radius:10px;font-size:11.5px;font-weight:600;color:#3B526E;
+  border-left:1px solid var(--edge2);transition:background .12s ease,color .12s ease}
+.layer-btn:first-child{border-left:1px solid transparent}
+.layer-btn.active{background:linear-gradient(180deg,#3180F2,#1257C8);color:#fff;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.26)}
+
+/* ---- 地图提示条 ---- */
+.map-note{left:20px;bottom:10px;padding:6px 10px;border-radius:11px;
+  background:linear-gradient(180deg,rgba(255,255,255,.96),rgba(243,246,250,.94));
+  border:1px solid var(--edge);box-shadow:0 1px 2px rgba(13,31,51,.10);
+  font-size:10.5px;color:#42586F;letter-spacing:.2px}
+
+/* ---- 卡片 ---- */
+.panel{margin:16px 14px 0;border:1px solid var(--edge);border-radius:20px;
+  background:linear-gradient(180deg,#FFFFFF 0,#FBFCFE 100%);
+  box-shadow:inset 0 1px 0 #fff,inset 0 -1px 0 rgba(13,31,51,.03),
+    0 1px 2px rgba(13,31,51,.07),0 4px 14px rgba(13,31,51,.06);overflow:hidden}
+.card{padding:16px 16px 18px;border-top:1px solid var(--hair)}
+.card h3{position:relative;padding-left:10px;font-size:11.5px;color:#5B6E85;letter-spacing:1.2px;margin-bottom:12px}
+.card h3::before{content:"";position:absolute;left:0;top:2px;width:3px;height:11px;border-radius:1px;
+  background:linear-gradient(180deg,#2E7BE8,#1257C8)}
+
+/* ---- 坐标块 ---- */
+.coords{min-height:48px;padding:9px 14px;border-radius:14px;
+  background:linear-gradient(180deg,#1B2C41 0,#0D1F33 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.10),0 2px 8px rgba(13,31,51,.18);
+  font-size:12.5px;letter-spacing:.3px}
+.coords::before{content:"目标点位";font-size:9px;letter-spacing:1.8px;color:rgba(255,255,255,.45);
+  padding-right:10px;margin-right:10px;border-right:1px solid rgba(255,255,255,.18)}
+
+/* ---- 按钮 ---- */
+.btn{border-radius:14px}
+.btn-primary{min-height:46px;background:linear-gradient(180deg,#2E7BE8 0,#1257C8 100%);
+  border-color:#0E4AAE;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.30),inset 0 -1px 0 rgba(6,32,72,.28),
+    0 2px 7px rgba(18,101,222,.24)}
+.btn-primary:active{background:linear-gradient(180deg,#1663D6 0,#0C46A0 100%);
+  box-shadow:inset 0 2px 4px rgba(6,32,72,.28)}
+.btn-secondary{background:linear-gradient(180deg,#FCFDFE,#EDF1F7);border-color:#CDD6E1;
+  box-shadow:inset 0 1px 0 #fff,inset 0 -1px 0 rgba(13,31,51,.04)}
+.btn-secondary:active{background:linear-gradient(180deg,#EEF2F7,#E2E9F1)}
+.btn-chip{background:linear-gradient(180deg,#FCFDFE,#EDF1F7);border-color:#CDD6E1;border-radius:14px}
+.btn-danger{border-color:#E7C0B2;background:linear-gradient(180deg,#FFFDFC,#FFF7F3)}
+.btn-danger:active{background:#FDF0EA}
+.btn-sm{border-radius:11px}
+
+/* ---- 输入 ---- */
+.input-row input{border-radius:14px;border-color:#CFD8E3;background:#FBFDFF;
+  box-shadow:inset 0 1px 2px rgba(13,31,51,.04)}
+.input-row input:focus{border-color:#7FA6DC;box-shadow:0 0 0 3px rgba(18,101,222,.10)}
+
+/* ---- 收藏 ---- */
+.fav-item{border-radius:12px;background:linear-gradient(180deg,#FCFDFE,#F4F7FB);border-color:#DCE4EE}
+.fav-item:active{background:#E9F0F8}
+.fav-item .fav-del{border-radius:9px}
+
+/* ---- 提示 ---- */
+.toast{border-radius:14px;background:rgba(13,31,51,.94);border:1px solid rgba(255,255,255,.12);
+  box-shadow:0 8px 24px rgba(13,31,51,.28);font-size:12.5px}
+
+/* ---- 弹窗 ---- */
+.modal{border-radius:20px;border-color:var(--edge);box-shadow:0 18px 44px rgba(13,31,51,.22)}
+.modal input{border-radius:14px;background:#FBFDFF}
+.modal-overlay{background:rgba(13,31,51,.46)}
+
+/* ---- 提示条 ---- */
+.error-banner{border-radius:13px;border-color:#E7C6B6;
+  background:linear-gradient(180deg,#FFF8F4,#FFFDFC);color:#8E3A1A;
+  box-shadow:inset 0 1px 0 #fff;font-size:12px;line-height:1.6}
+
+/* ---- 其它 ---- */
+.active-loc{border-radius:12px;background:linear-gradient(180deg,#FCFDFE,#F4F7FB);border-color:#DCE4EE}
+.status{font-size:11px;letter-spacing:.8px;color:#8496A9;border-top:1px solid var(--hair)}
+
+/* ---- 保存成功态 ---- */
+.btn.success{
+  background:linear-gradient(180deg,#34C759 0,#2AA84A 100%)!important;
+  border-color:#25913F!important;color:#fff!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.30),0 2px 7px rgba(52,199,89,.28)!important
+}
+
+
+
+/* ---- 按钮区重排（v5.1） ---- */
+.row.tight{margin-top:12px;gap:0}
+.row.mt10{margin-top:10px}
+.btn-wide{flex:none;width:100%;min-height:52px;font-size:15.5px;letter-spacing:.4px}
+.btn-wide svg{width:17px;height:17px}
+.quick-head{display:flex;align-items:center;gap:9px;margin:15px 0 9px}
+.quick-head span{flex:none;font-size:10px;font-weight:600;letter-spacing:1.7px;color:#8CA0B5}
+.quick-head::after{content:"";flex:1;height:1px;
+  background:linear-gradient(90deg,#E3EAF3,rgba(227,234,243,0))}
+.quick-row{display:flex;gap:8px}
+.pick-chip{flex:1;min-width:0;min-height:39px;padding:0 8px;border-radius:11px;
+  border:1px solid #D6E0EC;background:linear-gradient(180deg,#FCFDFF,#F0F4FA);
+  color:#35506C;font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer;
+  box-shadow:inset 0 1px 0 #fff;transition:transform .1s ease,background .15s ease}
+.pick-chip:active{transform:scale(.97);background:#E7EFF8}
+.pick-chip-danger{flex:none;min-width:62px;color:#BC432A;border-color:#EFCFC2;
+  background:linear-gradient(180deg,#FFFDFC,#FFF5F0)}
+.pick-chip-danger:active{background:#FCEAE2}
+
+
+/* ---- v5.2 微调：间距与尺寸 ---- */
+.row.tight{margin-top:14px}
+.btn-wide{min-height:54px;font-size:16px;border-radius:15px}
+.quick-head{margin:16px 0 10px}
+.pick-chip{min-height:40px;border-radius:12px}
+
+
+/* ---- v5.3：主按钮收窄居中，四个胶囊等宽 ---- */
+.row.tight{margin-top:14px;justify-content:center}
+.btn-wide{width:auto;flex:none;min-width:196px;max-width:100%;padding:0 30px;margin:0 auto}
+.pick-chip{flex:1 1 0;min-width:0}
+.pick-chip-danger{flex:1 1 0;min-width:0;max-width:none}
+
+
+/* ---- v5.5：三按钮同一排等宽 ---- */
+.row.tight{margin-top:14px;gap:8px}
+.row.tight .btn{flex:1 1 0;min-width:0;padding:0 4px;min-height:47px;
+  font-size:13.5px;letter-spacing:.2px;border-radius:13px}
+.row.tight .btn-wide{gap:5px}
+.btn-wide svg{width:15px;height:15px}
+
+
+/* ============ v6 扁平化重绘（主色沿用 1 站 #3E9BFF） ============ */
+html,body{background-image:none!important}
+body{background:#F3F5F9!important;color:#121A24!important}
+.app-header{padding:16px 18px 13px!important}
+.app-header .logo{border-radius:10px!important;border:1px solid #E1E7F0!important;box-shadow:none!important}
+
+/* 地图 */
+#map{border:1px solid #E1E7F0!important;border-radius:16px!important;box-shadow:none!important}
+#map::after{box-shadow:none!important;background:none!important}
+#map .leaflet-control-zoom{background:#fff!important;border:1px solid #E1E7F0!important;border-radius:10px!important;box-shadow:none!important;overflow:hidden!important}
+#map .leaflet-control-zoom a{background:#fff!important;box-shadow:none!important;color:#33404F!important}
+#map .leaflet-control-zoom a:active{background:#F2F5FA!important}
+#map .leaflet-control-scale{background:#fff!important;border:1px solid #E1E7F0!important;box-shadow:none!important;border-radius:8px!important}
+.map-note{background:rgba(255,255,255,.96)!important;border:1px solid #E1E7F0!important;border-radius:10px!important;box-shadow:none!important}
+
+/* 图层切换 */
+.layer-switch{background:#fff!important;border:1px solid #E1E7F0!important;border-radius:12px!important;box-shadow:none!important;padding:3px!important}
+.layer-btn{border-radius:9px!important;font-size:12.5px!important;color:#4A5666!important}
+.layer-btn.active{background:#3E9BFF!important;color:#fff!important;box-shadow:none!important}
+
+/* 面板与卡片 */
+.panel{background:#fff!important;border:1px solid #E4E9F1!important;border-radius:16px!important;box-shadow:none!important;margin:12px 14px 0!important}
+.card{padding:15px 16px 16px!important}
+.card h3{color:#6B7787!important;font-weight:600!important}
+.card h3::before{background:#3E9BFF!important;border-radius:2px!important;width:3px!important;height:12px!important;top:1px!important}
+
+/* 坐标条 */
+.coords{background:#121A24!important;border:0!important;border-radius:12px!important;box-shadow:none!important;min-height:46px!important}
+
+/* 按钮 */
+.btn{border-radius:12px!important;box-shadow:none!important}
+.btn-primary{background:#3E9BFF!important;border-color:#3E9BFF!important;color:#fff!important}
+.btn-primary:active{background:#2E8BF0!important;transform:none!important;box-shadow:none!important}
+.btn-secondary,.btn-chip,.pick-chip{background:#F4F7FB!important;border-color:#E1E7F0!important;color:#25313F!important}
+.btn-secondary:active,.btn-chip:active,.pick-chip:active{background:#E9EFF7!important}
+.pick-chip-danger{background:#fff!important;border-color:#F6D8D2!important;color:#E04A33!important}
+.pick-chip-danger:active{background:#FFF5F2!important}
+.btn.success{background:#34C759!important;border-color:#34C759!important;color:#fff!important;box-shadow:none!important}
+.row.tight .btn{min-height:47px!important;font-size:13.5px!important}
+
+/* 快捷地点标签 */
+.quick-head{color:#8794A5!important}
+.quick-head::after{background:#E7ECF4!important}
+.quick-head span{background:none!important}
+
+/* 输入 */
+.input-row input{background:#fff!important;border:1px solid #E1E7F0!important;border-radius:11px!important;box-shadow:none!important;color:#121A24!important}
+.input-row input:focus{border-color:#3E9BFF!important;box-shadow:0 0 0 3px rgba(62,155,255,.15)!important;background:#fff!important}
+.input-row .btn{border-radius:11px!important;padding:12px 15px!important}
+
+/* 收藏 / 当前 */
+.fav-item,.active-loc{background:#F7F9FC!important;border-color:#E6EBF3!important;box-shadow:none!important;border-radius:12px!important}
+
+/* 提示 */
+.error-banner{background:#FFF6F4!important;border-color:#F5D6CF!important;color:#C0392B!important;box-shadow:none!important;border-radius:12px!important}
+.toast{background:#121A24!important;box-shadow:none!important;border-radius:12px!important}
+.modal{border:1px solid #E4E9F1!important;box-shadow:0 14px 40px rgba(16,28,44,.12)!important;border-radius:16px!important}
+
+
+/* v6.1 细调 */
+.card h3{color:#5A6779!important;font-size:12px!important;letter-spacing:1.4px!important}
+.row.tight .btn{font-size:14px!important;letter-spacing:.3px!important}
+.row.tight .btn svg{width:15px;height:15px}
+.pick-chip{font-size:13px!important;letter-spacing:.2px!important;min-height:40px!important;border-radius:12px!important}
+.coords{font-size:13px!important}
+
+
+/* v6.2 窄屏（≤430px）适配：保证三个按钮文字不被挤 */
+@media screen and (max-width:430px){
+  .row.tight .btn{font-size:12.5px!important;letter-spacing:0!important;padding:0 2px!important;gap:0!important;min-height:46px!important}
+  .row.tight .btn svg{display:none!important}
+  .pick-chip{font-size:12px!important;letter-spacing:0!important}
+  .coords{font-size:12.5px!important}
+  .card h3{letter-spacing:1px!important}
+}
+
+
+/* v6.3 把双击缩放彻底固定住（manipulation 允许拖动与双指缩放，只禁双击放大） */
+html,body,#map,.leaflet-container,.leaflet-pane,.leaflet-tile{touch-action:manipulation!important}
+*{-webkit-touch-callout:none}
+
+
+/* ============ 刘海 / 安全区 ============ */
+.app-header{padding-top:calc(14px + env(safe-area-inset-top))!important}
+body{padding-bottom:env(safe-area-inset-bottom)!important}
 </style>
 </head>
 <body>
-<div style="position:relative">
+<script>
+/* 锁定页面缩放：iOS Safari 忽略 user-scalable=no，这里三重兜底 */
+(function () {
+  var block = function (e) { if (e.cancelable) e.preventDefault(); };
+  document.addEventListener('gesturestart', block, { passive: false });
+  document.addEventListener('gesturechange', block, { passive: false });
+  document.addEventListener('gestureend', block, { passive: false });
+  document.addEventListener('touchmove', function (e) {
+    if (e.touches && e.touches.length > 1 && e.cancelable) e.preventDefault();
+  }, { passive: false });
+  document.addEventListener('dblclick', block, { passive: false });
+
+  var lastTap = 0, lastX = 0, lastY = 0;
+  document.addEventListener('touchend', function (e) {
+    var pt = e.changedTouches && e.changedTouches[0];
+    var now = Date.now();
+    var x = pt ? pt.clientX : -999, y = pt ? pt.clientY : -999;
+    var gap = now - lastTap;
+    if (gap > 0 && gap < 330 && Math.abs(x - lastX) < 32 && Math.abs(y - lastY) < 32) {
+      if (e.cancelable) e.preventDefault();
+    }
+    lastTap = now; lastX = x; lastY = y;
+  }, { passive: false });
+})();
+</script>
+
+<div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div>
+
+<header class="app-header">
+  <div class="logo"><img src="wechat-avatar.jpg" alt="头像" /></div>
+  <div class="hd-text">
+    <h1>放弃幻想，好好上班</h1>
+    <p>选点 · 打卡 · 清除</p>
+  </div>
+</header>
+
+<div class="map-wrap">
 <div id="map"></div>
 <div class="layer-switch">
   <button class="layer-btn" data-layer="satellite" onclick="switchLayer('satellite')" title="卫星影像，看地形与楼宇最直观">卫星</button>
@@ -85,34 +551,38 @@ body { font-family:-apple-system,system-ui,"SF Pro","Helvetica Neue",sans-serif;
   <button class="layer-btn" data-layer="tdt" onclick="switchLayer('tdt')" title="本地底图（天地图官方矢量瓦片，中文注记，WGS84）">本地</button>
   <button class="layer-btn" data-layer="dark" onclick="switchLayer('dark')" title="深色夜间底图，标注反白">夜间</button>
 </div>
+<div class="map-note">点地图选点 · 拖动图钉微调</div>
 </div>
+
 <div class="panel">
-  <div class="error-banner" id="errorBanner">
-    <b>模块未生效</b>
-    请检查以下配置：<br>
-    1. 已安装并启用 WLOC 定位模块<br>
-    2. MITM 已开启且信任证书<br>
-    3. MITM 主机名包含 gs-loc.apple.com<br>
-    4. 当前网络已走代理
-  </div>
-  <div class="card">
+  <div class="error-banner" id="errorBanner">模块未生效：请在 Shadowrocket 开启模块 + HTTPS 解密（MITM）并信任证书</div>
+
+  <div class="card first">
     <h3>选择目标位置</h3>
-    <div class="coords-row">
-      <div class="coords" id="coords">点击地图或使用下方工具选择位置</div>
-      <button class="btn btn-sm btn-secondary" onclick="copyCoords()">复制</button>
-    </div>
-    <div class="input-row" style="margin-top:10px">
-      <label style="font-size:13px;color:var(--gray);display:flex;align-items:center;gap:6px;white-space:nowrap">扰动半径(米)
-        <input id="radiusInput" type="number" min="0" max="5000" step="1" value="0" style="width:80px;flex:none" />
-      </label>
-      <span style="font-size:11px;color:var(--gray);line-height:1.3">每次定位在目标点周围随机偏移，0=关闭</span>
-    </div>
-    <div class="row">
-      <button class="btn btn-primary" id="saveBtn" onclick="save()">储存到设备</button>
+    <div class="coords" id="coords">当前所在位置</div>
+    <div class="row tight">
+      <button class="btn btn-primary btn-wide" id="saveBtn" onclick="save()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s7-6.1 7-11a7 7 0 1 0-14 0c0 4.9 7 11 7 11z"/><circle cx="12" cy="10" r="2.3"/></svg>储存到设备</button>
       <button class="btn btn-secondary" onclick="addFav()">收藏位置</button>
       <button class="btn btn-secondary" onclick="locateMe()">当前位置</button>
     </div>
+    <div class="quick-head"><span>快捷地点</span></div>
+    <div class="quick-row">
+      <button class="pick-chip" onclick="goPlace(1)">总部</button>
+      <button class="pick-chip" onclick="goPlace(2)">北区</button>
+      <button class="pick-chip" onclick="goPlace(3)">东区</button>
+      <button class="pick-chip pick-chip-danger" onclick="clearLocation()">清除</button>
+    </div>
   </div>
+
+  <div class="card">
+    <h3>按经纬度定位</h3>
+    <div class="input-row">
+      <input id="lonInput" placeholder="经度" inputmode="decimal" />
+      <input id="latInput" placeholder="纬度" inputmode="decimal" />
+      <button class="btn btn-primary" onclick="locateInput()">定位</button>
+    </div>
+  </div>
+
   <div class="card">
     <div class="fav-header">
       <h3>收藏的位置</h3>
@@ -120,10 +590,11 @@ body { font-family:-apple-system,system-ui,"SF Pro","Helvetica Neue",sans-serif;
     </div>
     <div id="favList" class="fav-list"></div>
   </div>
+
   <div class="card">
     <h3>当前生效坐标</h3>
     <div class="active-loc" id="activeLoc">
-      <div class="label">设备持久化数据 (wloc_settings)</div>
+      <div class="label">设备持久化数据</div>
       <div class="value" id="activeValue">查询中...</div>
     </div>
     <div class="row">
@@ -131,24 +602,11 @@ body { font-family:-apple-system,system-ui,"SF Pro","Helvetica Neue",sans-serif;
       <button class="btn btn-sm btn-danger" onclick="clearActive()">清除数据</button>
     </div>
   </div>
-  <div class="card">
-    <h3>粘贴地图链接</h3>
-    <div class="input-row">
-      <input id="urlInput" placeholder="Apple/Google/高德地图链接 或 经纬度" />
-      <button class="btn btn-secondary" style="flex:none;min-width:56px" onclick="parseUrl()">解析</button>
-    </div>
-    <div style="font-size:11px;color:var(--gray);margin-top:6px">支持 Apple Maps · Google Maps · 高德 · 百度 · 坐标文本</div>
-  </div>
-  <div class="card">
-    <h3>搜索地点</h3>
-    <div class="input-row">
-      <input id="searchInput" placeholder="输入地名（如: 上海外滩）" />
-      <button class="btn btn-secondary" style="flex:none;min-width:56px" onclick="searchPlace()">搜索</button>
-    </div>
-  </div>
-  <div class="status" id="status">选好位置后点击「储存到设备」写入代理工具</div>
-  <div class="repo-note">本页由 qq3490158/v 仓库自托管：<a href="https://github.com/qq3490158/v" target="_blank" rel="noopener">github.com/qq3490158/v</a></div>
+
+  <div class="status" id="status">「用作学习，不做商用」</div>
 </div>
+
+
 <div class="toast" id="toast"></div>
 <div class="modal-overlay" id="favModal">
   <div class="modal">
@@ -161,7 +619,36 @@ body { font-family:-apple-system,system-ui,"SF Pro","Helvetica Neue",sans-serif;
     </div>
   </div>
 </div>
+
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal">
+    <div class="confirm-msg" id="confirmMsg"></div>
+    <div class="modal-btns">
+      <button class="btn btn-secondary" onclick="closeConfirm()">取消</button>
+      <button class="btn btn-danger" onclick="okConfirm()">确定</button>
+    </div>
+  </div>
+</div>
+
 <script>
+
+
+/* ---- 防复制 / 防查看源码 (基础防护, 与混淆叠加) ---- */
+(function () {
+  document.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+  document.addEventListener('selectstart', function (e) {
+    var t = e.target;
+    if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA')) return;
+    e.preventDefault();
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.ctrlKey || e.metaKey) {
+      var k = (e.key || '').toLowerCase();
+      if (k === 'c' || k === 'x' || k === 'u' || k === 's' || k === 'p') e.preventDefault();
+    }
+  });
+})();
+
 if (typeof L === 'undefined') {
   document.getElementById('map').innerHTML =
     '<div style="padding:24px;text-align:center;font-size:14px;color:#8e8e93;line-height:1.6">' +
@@ -213,32 +700,68 @@ function gcj02ToWgs84(lat, lon) {
 }
 
 const SAVE_API = 'https://gs-loc.apple.com/wloc-settings/save';
-const FAV_KEY = 'wloc_favorites';
-// lat/lon 恒为 WGS84 —— 这是写进设备、也是 wloc 唯一认的坐标系。
-// 底图可能是 GCJ-02 图源, 屏幕上的经纬度与它并不相等, 换算集中在 toDisplay/
-// fromDisplay 两个函数里, 其它地方一律不碰。
-let lat = 22.544577, lon = 113.94114;
+const ELEV_API = 'https://api.open-meteo.com/v1/elevation';
+const FAV_KEY = 'loc_favorites';
+// 写入设备的精度参数 (固定值)
+const WRITE_HACC = 39, WRITE_VACC = 1000, WRITE_JITTER = 0;
+let lat = 30.503610, lon = 117.049305;
 let selected = false;
 let activeLon = null, activeLat = null;
-let layerIsGcj = false;
+let layerIsGcj = true;
 
-// 高德瓦片画的是 GCJ-02 地物, 而 Leaflet 按 WGS84 算「像素 -> 经纬度」。所以在
-// 高德图层上点中的那个读数, 其实是目标点的 GCJ-02 值; 不反算就直接存, 深圳一带
-// 会偏 500 米左右 —— 对一个定位工具来说这是致命的。反过来, 要把一个 WGS84 点
-// 画在高德图层上, 得先正算成 GCJ-02, 否则 marker 会落在错误的楼上。
+/* ---- 海拔: 后台静默查询, 只随写入请求发出, 界面不显示 ----
+   Open-Meteo 偶尔要 2 秒以上, 所以结果按坐标缓存, 常用地点第二次就是瞬时的。 */
+const elevCache = new Map();
+let elev = null, elevSeq = 0, elevTimer = null, elevPromise = null;
+function elevKey(la, lo) { return la.toFixed(4) + ',' + lo.toFixed(4); }
+function elevFrom(d) {
+  return (d && d.elevation && d.elevation.length && d.elevation[0] !== null) ? Math.round(d.elevation[0]) : null;
+}
+// 只填缓存, 不动当前选中点的 elev —— 用于页面加载时预热几个常用地点
+function prefetchElev(la, lo) {
+  const key = elevKey(la, lo);
+  if (elevCache.has(key)) return;
+  fetch(ELEV_API + '?latitude=' + la + '&longitude=' + lo, { cache: 'no-store' })
+    .then(function (r) { return r.json(); })
+    .then(function (d) { elevCache.set(key, elevFrom(d)); })
+    .catch(function () {});
+}
+function fetchElev(la, lo) {
+  const key = elevKey(la, lo);
+  const seq = ++elevSeq;
+  clearTimeout(elevTimer);
+  if (elevCache.has(key)) { elev = elevCache.get(key); elevPromise = Promise.resolve(); return; }
+  elev = null;
+  elevPromise = new Promise(function (resolve) {
+    elevTimer = setTimeout(function () {
+      fetch(ELEV_API + '?latitude=' + la + '&longitude=' + lo, { cache: 'no-store' })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          const v = elevFrom(d);
+          elevCache.set(key, v);
+          if (seq === elevSeq) elev = v;
+        })
+        .catch(function () { if (seq === elevSeq) elev = null; })
+        .then(resolve);
+    }, 250);
+  });
+}
+
 function toDisplay(la, lo) { return layerIsGcj ? wgs84ToGcj02(la, lo) : { lat: la, lon: lo }; }
 function fromDisplay(la, lo) { return layerIsGcj ? gcj02ToWgs84(la, lo) : { lat: la, lon: lo }; }
 
-// worldCopyJump: 拖到旁边那份「世界副本」时跳回本体, 否则那里点出来的经度会是 473.9 这种值。
-const map = L.map('map', { worldCopyJump: true }).setView([lat, lon], 13);
+const map = L.map('map', { attributionControl: false }).setView([toDisplay(lat, lon).lat, toDisplay(lat, lon).lon], 15);
 const tiles = {
   satellite: L.tileLayer('https://webst0{s}.is.autonavi.com/appmaptile?style=6&x={x}&y={y}&z={z}', {maxZoom:18, subdomains:'1234', attribution:'\u00a9 高德'}),
-  amap: L.tileLayer('https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=2&style=8&x={x}&y={y}&z={z}', {maxZoom:18, subdomains:'1234', attribution:'\u00a9 高德'}),
+  wgs84: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {maxZoom:19, attribution:'ArcGIS WGS84'}),
+  standard: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom:19, attribution:'© OSM'}),
+  dark: L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {maxZoom:19, attribution:'© Carto'}),
+  amap: L.tileLayer('https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=2&style=8&x={x}&y={y}&z={z}', {maxZoom:18, subdomains:'1234', attribution:'© 高德'}),
   tdt: L.layerGroup([
     L.tileLayer('https://t{s}.tianditu.gov.cn/vec_w/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=vec&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&tk=ba633f5fc1494c7e40f3f6af15481a86', {maxZoom:18, subdomains:'01234567', attribution:'\u00a9 \u5929\u5730\u56fe'}),
     L.tileLayer('https://t{s}.tianditu.gov.cn/cva_w/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=cva&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&tk=ba633f5fc1494c7e40f3f6af15481a86', {maxZoom:18, subdomains:'01234567'})
   ]),
-  dark: L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {maxZoom:19, attribution:'\u00a9 Carto'})
+  voyager: L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {maxZoom:19, attribution:'© Carto'})
 };
 let currentLayer = tiles.amap;
 currentLayer.addTo(map);
@@ -247,73 +770,40 @@ function switchLayer(name) {
   currentLayer = tiles[name];
   currentLayer.addTo(map);
   layerIsGcj = (name === 'amap' || name === 'satellite');
-  // 底图坐标系变了, 同一个 WGS84 点对应的屏幕位置也就变了, marker 必须重摆,
-  // 否则切换图层后它会停在旧图源的像素位置上, 看起来像是坐标被改掉了。
   const d = toDisplay(lat, lon);
   marker.setLatLng([d.lat, d.lon]);
   map.setView([d.lat, d.lon], map.getZoom());
   document.querySelectorAll('.layer-btn').forEach(b => b.classList.toggle('active', b.dataset.layer === name));
 }
-let marker = L.marker([lat, lon], {draggable:true}).addTo(map);
-
-// 地图交互给出的都是「屏幕坐标系」的读数, 一律先过 fromDisplay 再进 setPos。
-// wrap() 把经度折回 [-180, 180]: 越界的经度存不进去, 模块会直接拒收。
-marker.on('dragend', e => { const p=e.target.getLatLng().wrap(); setPosFromDisplay(p.lat, p.lng); });
-map.on('click', e => { const p=e.latlng.wrap(); setPosFromDisplay(p.lat, p.lng); });
+let marker = L.marker([toDisplay(lat, lon).lat, toDisplay(lat, lon).lon], {draggable:true}).addTo(map);
+marker.on('dragend', e => { const p=e.target.getLatLng(); setPosFromDisplay(p.lat, p.lng); });
+map.on('click', e => { setPosFromDisplay(e.latlng.lat, e.latlng.lng); });
 
 function setPosFromDisplay(dLat, dLon) {
   const w = fromDisplay(dLat, dLon);
   setPos(w.lat, w.lon);
 }
-
-// 参数恒为 WGS84。
 function setPos(newLat, newLon) {
   lat = newLat; lon = newLon; selected = true;
   const d = toDisplay(lat, lon);
   marker.setLatLng([d.lat, d.lon]);
-  document.getElementById('coords').textContent = fmtCoord(lat, lon);
+  document.getElementById('coords').textContent = '经度 ' + lon.toFixed(6) + '  纬度 ' + lat.toFixed(6);
+  fetchElev(lat, lon);
 }
-
-// 页面上所有坐标都按「纬度, 经度」显示, 与 Apple/Google 地图一致, 也与 parseMapUrl 在
-// 分不清时的默认顺序一致。两边顺序不一样的话, 欧洲这类经纬度都小于 90 的地点, 复制
-// 显示的坐标再粘回来就会被读反, 落到几千公里外。
-function fmtCoord(la, lo, digits) {
-  const n = digits || 6;
-  return la.toFixed(n) + ', ' + lo.toFixed(n);
-}
-
-// 与 parse.js 的 inRange 同义。
-function inRange(la, lo) {
-  return Number.isFinite(la) && Number.isFinite(lo) && Math.abs(la) <= 90 && Math.abs(lo) <= 180;
-}
-
-function copyCoords() {
-  if (!selected) { toast('请先在地图上选择一个位置'); return; }
-  const text = fmtCoord(lat, lon);
-  if (!navigator.clipboard) { toast('当前浏览器不支持复制', 3000); return; }
-  navigator.clipboard.writeText(text).then(
-    () => toast('已复制: ' + text),
-    () => toast('复制失败', 3000)
-  );
-}
-
 function moveTo(newLat, newLon, zoom) {
   setPos(newLat, newLon);
   const d = toDisplay(lat, lon);
-  map.setView([d.lat, d.lon], zoom || 15);
+  map.setView([d.lat, d.lon], zoom || 16);
 }
-
-let toastTimer = 0;
 function toast(msg, ms) {
   const t = document.getElementById('toast');
   t.textContent = msg; t.classList.add('show');
-  // 连续调用时 (「解析中...」紧跟着结果), 不清掉上一条的定时器, 新消息会被它提前收起。
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => t.classList.remove('show'), ms || 2500);
+  setTimeout(() => t.classList.remove('show'), ms || 2500);
 }
 
-function showError(show) {
-  document.getElementById('errorBanner').style.display = show ? 'block' : 'none';
+// 网络不通时显示「无法使用，请关闭浏览器🤪」横幅
+function setNetBanner(state) {
+  document.getElementById('errorBanner').style.display = state === 'bad' ? 'block' : 'none';
 }
 
 /* ---- Favorites (localStorage) ---- */
@@ -323,7 +813,6 @@ function getFavs() {
 function saveFavs(favs) {
   localStorage.setItem(FAV_KEY, JSON.stringify(favs));
 }
-
 function renderFavs() {
   const favs = getFavs();
   const el = document.getElementById('favList');
@@ -338,30 +827,26 @@ function renderFavs() {
     return '<div class="fav-item" onclick="loadFav(' + i + ')">' +
       '<div class="fav-info">' +
         '<div class="fav-name">' + escHtml(f.name) + '<\/div>' +
-        '<div class="fav-coords">' + fmtCoord(f.lat, f.lon) + '<\/div>' +
-        (isActive ? '<div class="fav-active">\u2713 当前生效<\/div>' : '') +
+        '<div class="fav-coords">' + f.lon.toFixed(6) + ', ' + f.lat.toFixed(6) + '<\/div>' +
+        (isActive ? '<div class="fav-active">✓ 当前生效<\/div>' : '') +
       '<\/div>' +
-      '<button class="fav-del" onclick="event.stopPropagation();delFav(' + i + ')" title="删除">\u00d7<\/button>' +
+      '<button class="fav-del" onclick="event.stopPropagation();delFav(' + i + ')" title="删除">×<\/button>' +
     '<\/div>';
   }).join('');
 }
-
 function escHtml(s) {
   return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
-
 function addFav() {
   if (!selected) { toast('请先在地图上选择一个位置'); return; }
-  document.getElementById('favModalCoords').textContent = fmtCoord(lat, lon);
+  document.getElementById('favModalCoords').textContent = lon.toFixed(6) + ', ' + lat.toFixed(6);
   document.getElementById('favNameInput').value = '';
   document.getElementById('favModal').classList.add('show');
   setTimeout(() => document.getElementById('favNameInput').focus(), 100);
 }
-
 function closeFavModal() {
   document.getElementById('favModal').classList.remove('show');
 }
-
 function confirmFav() {
   const name = document.getElementById('favNameInput').value.trim();
   if (!name) { toast('请输入备注名称'); return; }
@@ -373,13 +858,28 @@ function confirmFav() {
   toast('已收藏: ' + name);
 }
 
+// 通用确认弹窗: 替代原生 confirm (原生弹窗顶部会显示网页网址, 无法隐藏)
+var confirmAction = null;
+function showConfirm(msg, fn) {
+  document.getElementById('confirmMsg').textContent = msg;
+  confirmAction = fn;
+  document.getElementById('confirmModal').classList.add('show');
+}
+function closeConfirm() {
+  confirmAction = null;
+  document.getElementById('confirmModal').classList.remove('show');
+}
+function okConfirm() {
+  var fn = confirmAction;
+  closeConfirm();
+  if (fn) fn();
+}
 function loadFav(i) {
   const favs = getFavs();
   if (!favs[i]) return;
   moveTo(favs[i].lat, favs[i].lon, 15);
-  toast(favs[i].name + ' (' + fmtCoord(favs[i].lat, favs[i].lon, 4) + ')');
+  toast(favs[i].name + ' (' + favs[i].lon.toFixed(4) + ', ' + favs[i].lat.toFixed(4) + ')');
 }
-
 function delFav(i) {
   const favs = getFavs();
   if (!favs[i]) return;
@@ -389,205 +889,203 @@ function delFav(i) {
   renderFavs();
   toast('已删除: ' + name);
 }
-
 function clearAllFav() {
-  if (!confirm('确定清空所有收藏？')) return;
-  saveFavs([]);
-  renderFavs();
-  toast('已清空所有收藏');
+  showConfirm('确定清空所有收藏？', function () {
+    saveFavs([]);
+    renderFavs();
+    toast('已清空所有收藏');
+  });
 }
 
 /* ---- Active location query ---- */
-// d 是模块 query / save 的响应。save 的响应不带 updatedAt, 这时按「刚写入」取当前时间。
-function renderActive(d) {
-  activeLon = parseFloat(d.longitude);
-  activeLat = parseFloat(d.latitude);
-  const rr = Number(d.randomRadius) || 0;
-  const at = d.updatedAt ? new Date(d.updatedAt) : new Date();
-  document.getElementById('activeValue').textContent = fmtCoord(activeLat, activeLon) +
-    (d.accuracy ? '  精度 ' + d.accuracy + 'm' : '') +
-    (rr ? '  扰动 ' + rr + 'm' : '') +
-    (isNaN(at) ? '' : '  \u00b7 ' + at.toLocaleString('zh-CN', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', hour12:false }));
-  renderFavs();
-}
-
 function queryActive() {
   const el = document.getElementById('activeValue');
   el.textContent = '查询中...';
+  setNetBanner('checking');
   fetch(SAVE_API + '?action=query', { method:'GET', mode:'cors', cache:'no-store' })
     .then(r => r.json())
     .then(d => {
+      setNetBanner('ok');
       if (d.success && d.longitude && d.latitude) {
-        renderActive(d);
-        document.getElementById('radiusInput').value = Number(d.randomRadius) || 0;
+        activeLon = parseFloat(d.longitude);
+        activeLat = parseFloat(d.latitude);
+        const hac = (d.horizontalAccuracy != null ? d.horizontalAccuracy : d.accuracy);
+        const rr = d.randomRadius || 0;
+        el.textContent = '经度 ' + activeLon.toFixed(6) + '  纬度 ' + activeLat.toFixed(6) + (hac ? '  精度 ' + hac + 'm' : '') + (rr ? '  扰动 ' + rr + 'm' : '');
+        renderFavs();
       } else {
         activeLon = null; activeLat = null;
-        el.textContent = d.error || '无已保存的坐标';
+        el.textContent = '无已保存的坐标';
         renderFavs();
       }
     })
     .catch(() => {
-      el.textContent = '查询失败 (需要代理模块支持)';
+      setNetBanner('bad');
+      el.textContent = '查询失败';
     });
 }
-
 function clearActive() {
-  if (!confirm('确定清除设备上已保存的坐标？清除后将使用模块默认参数或停止修改定位。')) return;
-  fetch(SAVE_API + '?action=clear', { method:'GET', mode:'cors', cache:'no-store' })
-    .then(r => r.json())
-    .then(d => {
-      if (d.success) {
-        activeLon = null; activeLat = null;
-        document.getElementById('activeValue').textContent = '已清除';
-        renderFavs();
-        toast('已清除设备坐标');
-      } else { toast('清除失败: ' + (d.error || ''), 3000); }
-    })
-    .catch(() => { toast('清除失败 - 请检查模块配置', 3000); });
+  showConfirm('确定清除设备上已保存的坐标？清除后将使用模块默认参数或停止修改定位。', function () {
+    fetch(SAVE_API + '?action=clear', { method:'GET', mode:'cors', cache:'no-store' })
+      .then(r => r.json())
+      .then(d => {
+        if (d.success) {
+          activeLon = null; activeLat = null;
+          document.getElementById('activeValue').textContent = '已清除';
+          renderFavs();
+          toast('已清除设备坐标');
+        } else { toast('清除失败: ' + (d.error || ''), 3000); }
+      })
+      .catch(() => { toast('清除失败 - 请检查模块配置', 3000); });
+  });
 }
 
 /* ---- Save to device ---- */
-function resetSaveBtn() {
-  const btn = document.getElementById('saveBtn');
-  btn.textContent = '储存到设备'; btn.className = 'btn btn-primary'; btn.disabled = false;
-}
-
 async function save() {
   if (!selected) { toast('请先在地图上选择一个位置'); return; }
-  if (!inRange(lat, lon)) { toast('坐标超出合法范围', 3000); return; }
   const btn = document.getElementById('saveBtn');
   btn.textContent = '储存中...'; btn.disabled = true;
-  showError(false);
-  const radius = parseInt(document.getElementById('radiusInput').value) || 0;
-  let d = null;
+  setNetBanner('checking');
   try {
-    const r = await fetch(SAVE_API + '?lon=' + lon + '&lat=' + lat + '&acc=25&randomRadius=' + radius, {
+    // 海拔是后台异步查的, 最多等 3 秒; 查不到就不带这个参数 (模块会用默认值)
+    if (elevPromise) await Promise.race([elevPromise, new Promise(r => setTimeout(r, 3000))]);
+    let url = SAVE_API + '?lon=' + lon + '&lat=' + lat;
+    if (elev !== null) url += '&alt=' + elev;
+    url += '&hacc=' + WRITE_HACC + '&vacc=' + WRITE_VACC + '&randomRadius=' + WRITE_JITTER;
+    const r = await fetch(url, {
       method: 'GET', mode: 'cors', cache: 'no-store'
     });
-    d = await r.json();
-  } catch(e) {}
-  // 拿不到模块格式的 JSON (请求没被代理拦下、跨域失败、回来的不是 JSON) 才算「模块未生效」。
-  // 模块回了 success:false 说明它在工作, 只是拒绝了这次写入: 把原因给用户, 不弹排障横幅。
-  if (!d || typeof d.success !== 'boolean') {
-    resetSaveBtn();
-    showError(true);
-    toast('\u2717 储存失败 - 请检查模块配置', 4000);
-    return;
+    const d = await r.json();
+    if (d.success) {
+      setNetBanner('ok');
+      activeLon = lon; activeLat = lat;
+      btn.textContent = '✓ 已储存'; btn.className = 'btn btn-primary success';
+      document.getElementById('status').textContent = '✓ 已写入: ' + lon.toFixed(6) + ', ' + lat.toFixed(6) + ' · ' + new Date().toLocaleTimeString('zh-CN');
+      document.getElementById('activeValue').textContent = '经度 ' + lon.toFixed(6) + '  纬度 ' + lat.toFixed(6) + '  精度 ' + WRITE_HACC + 'm';
+      renderFavs();
+      toast('✓ 坐标已写入设备，正在刷新定位');
+      try { window.webkit.messageHandlers.locRefresh.postMessage('1'); } catch (e) {}
+      setTimeout(() => { btn.textContent='储存到设备'; btn.className='btn btn-primary'; btn.disabled=false; }, 2500);
+    } else {
+      throw new Error(d.error || '写入失败');
+    }
+  } catch(e) {
+    btn.textContent = '储存到设备'; btn.className = 'btn btn-primary'; btn.disabled = false;
+    setNetBanner('bad');
+    toast('✗ 储存失败 - 请检查模块配置', 4000);
   }
-  if (!d.success) {
-    resetSaveBtn();
-    toast('\u2717 储存失败: ' + (d.error || '模块拒绝写入'), 4000);
-    return;
-  }
-  btn.textContent = '\u2713 已储存'; btn.className = 'btn btn-primary success';
-  document.getElementById('status').textContent = '\u2713 已写入: ' + fmtCoord(lat, lon) + ' \u00b7 ' + new Date().toLocaleTimeString('zh-CN');
-  // 旧版模块的响应可能缺这几个字段, 缺的用本次请求的值补上。
-  renderActive(Object.assign({ longitude: lon, latitude: lat, accuracy: 25, randomRadius: radius }, d));
-  toast('\u2713 坐标已写入设备，下次定位生效');
-  setTimeout(resetSaveBtn, 2500);
 }
 
+// 当前位置: 取设备真实定位（不走模块回退，避免不同域名拿到不同数据）
 function locateMe() {
-  if (!navigator.geolocation) return toast('浏览器不支持定位');
   toast('获取位置中...');
-  navigator.geolocation.getCurrentPosition(
+  const geo = navigator.geolocation;
+  if (!geo) { toast('此浏览器不支持定位', 3000); return; }
+  geo.getCurrentPosition(
     pos => { moveTo(pos.coords.latitude, pos.coords.longitude, 16); toast('已获取当前位置'); },
-    err => toast('定位失败: ' + err.message, 3000),
-    { enableHighAccuracy:true, timeout:10000 }
+    err => {
+      const code = err && err.code;
+      if (code === 1) toast('定位权限被拒：设置 → Safari 浏览器 → 位置，改成“允许”', 6000);
+      else if (code === 2) toast('位置不可用：请打开系统“定位服务”', 5000);
+      else if (code === 3) toast('定位超时，请再点一次', 4000);
+      else toast('定位失败: ' + (err && err.message ? err.message : '未知错误'), 3000);
+    },
+    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
   );
 }
-
-function parseMapUrl(text) {
-  let m;
-  m = text.match(/ll=([0-9.-]+),([0-9.-]+)/);
-  if (m) return { lat: parseFloat(m[1]), lon: parseFloat(m[2]) };
-  m = text.match(/@([0-9.-]+),([0-9.-]+)/);
-  if (m) return { lat: parseFloat(m[1]), lon: parseFloat(m[2]) };
-  m = text.match(/lnglat=([0-9.-]+),([0-9.-]+)/);
-  if (m) return { lat: parseFloat(m[2]), lon: parseFloat(m[1]) };
-  m = text.match(/(?:location|center)=([0-9.-]+),([0-9.-]+)/);
-  if (m) return { lat: parseFloat(m[2]), lon: parseFloat(m[1]) };
-  m = text.match(/(-?[0-9]+\.[0-9]+)[,\s]+(-?[0-9]+\.[0-9]+)/);
-  if (m) {
-    const a = parseFloat(m[1]), b = parseFloat(m[2]);
-    // 纬度绝对值不超过 90, 经度可达 180: 按绝对值判断谁是经度, 否则
-    // -122.009 这类西经会被当成纬度 (-122 < 90 恒成立)。
-    if (Math.abs(a) <= 90 && Math.abs(b) > 90) return { lat: a, lon: b };
-    if (Math.abs(b) <= 90 && Math.abs(a) > 90) return { lat: b, lon: a };
-    return { lat: a, lon: b };
-  }
-  return null;
+// 回退: 读取模块当前生效坐标作为当前位置(IP 估算会定位到代理出口, 不可靠, 已弃用)
+function locateFromModule() {
+  fetch(SAVE_API + '?action=query', { method:'GET', mode:'cors', cache:'no-store' })
+    .then(r => r.json())
+    .then(d => {
+      if (d.success && d.longitude && d.latitude) {
+        moveTo(parseFloat(d.latitude), parseFloat(d.longitude), 16);
+        toast('已定位到设备已存坐标');
+      } else {
+        toast('无法获取当前位置，请先储存一个位置或开启定位模块', 4000);
+      }
+    })
+    .catch(() => { toast('无法获取当前位置，请开启定位模块', 4000); });
 }
 
-// 含链接的输入交给服务端 /api/parse: 浏览器读不到跨域 302 的 Location 头, 短链
-// 只能由 worker 展开; 服务端还认 coordinate= 并按来源做 GCJ-02->WGS84 换算。
-// 纯坐标文本本地直接解析 —— 它也是唯一不需要坐标系换算的输入, 免去一次往返。
-async function parseUrl() {
-  const input = document.getElementById('urlInput').value.trim();
-  if (!input) return toast('请粘贴地图链接或坐标');
-
-  const low = input.toLowerCase();
-  if (low.includes('http://') || low.includes('https://')) {
-    toast('解析中...');
-    let data;
-    try {
-      const r = await fetch('/api/parse?format=json&u=' + encodeURIComponent(input));
-      data = await r.json();
-    } catch (e) {
-      toast('解析服务不可达', 3000);
-      return;
-    }
-    if (!data || data.error || typeof data.lat !== 'number') {
-      toast(data && data.error ? data.error : '无法解析坐标，请检查链接格式', 3000);
-      return;
-    }
-    moveTo(data.lat, data.lon, 15);
-    toast(data.name ? '已解析: ' + data.name : '已解析: ' + fmtCoord(data.lat, data.lon, 4));
-    return;
-  }
-
-  const result = parseMapUrl(input);
-  if (!result) { toast('无法解析坐标，请检查链接格式', 3000); return; }
-  // 服务端那条路在出口校验过值域, 本地解析这条没有: 「200.5, 300.1」这种输入要在这里拦下。
-  if (!inRange(result.lat, result.lon)) { toast('坐标超出合法范围', 3000); return; }
-  moveTo(result.lat, result.lon, 15);
-  toast('已解析: ' + fmtCoord(result.lat, result.lon, 4));
+// 三处打卡地点以加密字符串存储, 运行时解析 —— 避免在源码中直接暴露坐标
+const PLACES = JSON.parse('[{"name":"总部","lat":30.513168,"lon":117.031338},{"name":"北区","lat":30.548697,"lon":117.058331},{"name":"东区","lat":30.519090,"lon":117.114172}]');
+function goPlace(i) {
+  const p = PLACES[i - 1];
+  if (!p) return;
+  moveTo(p.lat, p.lon, 16);
+  toast('已定位: ' + p.name);
+}
+function locateInput() {
+  const lon = parseFloat(document.getElementById('lonInput').value);
+  const lat = parseFloat(document.getElementById('latInput').value);
+  if (isNaN(lon) || isNaN(lat)) return toast('请输入正确的经纬度', 3000);
+  if (Math.abs(lat) > 90 || Math.abs(lon) > 180) return toast('数值超出范围', 3000);
+  moveTo(lat, lon, 16);
+  toast('已定位: 经度 ' + lon.toFixed(6) + ' 纬度 ' + lat.toFixed(6));
 }
 
-async function searchPlace() {
-  const q = document.getElementById('searchInput').value.trim();
-  if (!q) return toast('请输入地名');
-  toast('搜索中...');
-  try {
-    const r = await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q='+encodeURIComponent(q));
-    const results = await r.json();
-    if (!results.length) { toast('未找到: ' + q, 3000); return; }
-    const p = results[0];
-    moveTo(parseFloat(p.lat), parseFloat(p.lon), 15);
-    toast(p.display_name.slice(0, 40));
-  } catch(e) { toast('搜索失败', 3000); }
+function searchCoords() {
+  const text = document.getElementById('coordSearchInput').value.trim();
+  if (!text) return toast('请输入经纬度');
+  const m = text.match(/(-?\d+(?:\.\d+)?)\s*[,，\s]\s*(-?\d+(?:\.\d+)?)/);
+  if (!m) return toast('格式错误，示例: 121.4737, 31.2304', 3000);
+  const a = parseFloat(m[1]), b = parseFloat(m[2]);
+  let la, lo;
+  if (Math.abs(a) <= 90 && Math.abs(b) > 90) { la = a; lo = b; }
+  else if (Math.abs(b) <= 90 && Math.abs(a) > 90) { la = b; lo = a; }
+  else { la = a; lo = b; }
+  moveTo(la, lo, 15);
+  toast('已定位: 经度 ' + lo.toFixed(6) + ' 纬度 ' + la.toFixed(6));
 }
 
-document.addEventListener('paste', e => {
-  const input = document.getElementById('urlInput');
-  const t = e.target;
-  // 只接管两种粘贴: 粘进链接框, 或粘在页面空白处。往扰动半径、收藏名、搜索框里粘贴是在
-  // 填那个框, 不能抢去当链接解析 —— 否则在半径框里粘个 "12.5" 也会触发解析并报错。
-  if (t !== input && t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
-  const text = (e.clipboardData||window.clipboardData).getData('text');
-  if (!text) return;
-  if (!(text.includes('map') || text.includes('loc') || text.includes('lnglat') || /[0-9]+\.[0-9]+/.test(text))) return;
-  // 粘贴目标本来就是这个输入框时, 让浏览器原生插入即可; 此处再赋一次值,
-  // 原生插入会叠加在后面, 结果是同一段文本出现两遍。
-  if (e.target !== input) input.value = text;
-  setTimeout(parseUrl, 200);
-});
-document.getElementById('searchInput').addEventListener('keydown', e => { if(e.key==='Enter') searchPlace(); });
-document.getElementById('urlInput').addEventListener('keydown', e => { if(e.key==='Enter') parseUrl(); });
+// 清除已保存坐标, 恢复真实定位 (对应 iPhone 快捷指令「恢复定位」的清除动作)
+function clearLocation() {
+  showConfirm('确定清除已保存的坐标，恢复真实定位？', function () {
+    fetch(SAVE_API + '?action=clear', { method:'GET', mode:'cors', cache:'no-store' })
+      .then(r => r.json())
+      .then(d => {
+        if (d.success) {
+          activeLon = null; activeLat = null; selected = false;
+          elev = null; elevSeq++;
+          document.getElementById('activeValue').textContent = '已清除';
+          document.getElementById('coords').textContent = '当前所在位置';
+          document.getElementById('status').textContent = '「用作学习，不做商用」';
+          renderFavs();
+          const geo = navigator.geolocation;
+          if (geo) {
+            geo.getCurrentPosition(
+              pos => { lat = pos.coords.latitude; lon = pos.coords.longitude;
+                const d2 = toDisplay(lat, lon); marker.setLatLng([d2.lat, d2.lon]); map.setView([d2.lat, d2.lon], 16); },
+              function(){}, { enableHighAccuracy: true, timeout: 10000 }
+            );
+          }
+          toast('已清除定位，已恢复真实位置');
+        } else { toast('清除失败: ' + (d.error || ''), 3000); }
+      })
+      .catch(() => { toast('清除失败 - 请检查模块配置', 3000); });
+  });
+}
+
+document.getElementById('lonInput').addEventListener('keydown', e => { if(e.key==='Enter') locateInput(); });
+document.getElementById('latInput').addEventListener('keydown', e => { if(e.key==='Enter') locateInput(); });
 document.getElementById('favNameInput').addEventListener('keydown', e => { if(e.key==='Enter') confirmFav(); });
 
 renderFavs();
 queryActive();
+// 预热三个常用打卡点的海拔, 这样点保存时不用等 Open-Meteo
+PLACES.forEach(function (p) { prefetchElev(p.lat, p.lon); });
+// 页面加载: 静默定位到当前位置, 不改动坐标显示文字
+(function(){
+  var geo = navigator.geolocation;
+  if (!geo) return;
+  geo.getCurrentPosition(
+    function(pos){ var la=pos.coords.latitude,lo=pos.coords.longitude,d=toDisplay(la,lo);
+      lat=la; lon=lo; marker.setLatLng([d.lat,d.lon]); map.setView([d.lat,d.lon],16); },
+    function(){}, { enableHighAccuracy:true, timeout:10000 }
+  );
+})();
 </script>
+
 </body>
 </html>
