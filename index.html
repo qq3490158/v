@@ -80,12 +80,10 @@ body { font-family:-apple-system,system-ui,"SF Pro","Helvetica Neue",sans-serif;
 <div style="position:relative">
 <div id="map"></div>
 <div class="layer-switch">
-  <button class="layer-btn active" data-layer="satellite" onclick="switchLayer('satellite')">卫星</button>
-  <button class="layer-btn" data-layer="wgs84" onclick="switchLayer('wgs84')">WGS84</button>
-  <button class="layer-btn" data-layer="amap" onclick="switchLayer('amap')" title="高德为 GCJ-02 偏移图源，选点已自动换算回 WGS84">高德</button>
-  <button class="layer-btn" data-layer="voyager" onclick="switchLayer('voyager')">彩色</button>
-  <button class="layer-btn" data-layer="standard" onclick="switchLayer('standard')">标准</button>
-  <button class="layer-btn" data-layer="dark" onclick="switchLayer('dark')">暗色</button>
+  <button class="layer-btn" data-layer="satellite" onclick="switchLayer('satellite')" title="卫星影像，看地形与楼宇最直观">卫星</button>
+  <button class="layer-btn active" data-layer="amap" onclick="switchLayer('amap')" title="高德矢量底图（高清瓦片），地名标注最全（偏移图源，选点已自动换算）">高德</button>
+  <button class="layer-btn" data-layer="tdt" onclick="switchLayer('tdt')" title="本地底图（天地图官方矢量瓦片，中文注记，WGS84）">本地</button>
+  <button class="layer-btn" data-layer="dark" onclick="switchLayer('dark')" title="深色夜间底图，标注反白">夜间</button>
 </div>
 </div>
 <div class="panel">
@@ -234,20 +232,21 @@ function fromDisplay(la, lo) { return layerIsGcj ? gcj02ToWgs84(la, lo) : { lat:
 // worldCopyJump: 拖到旁边那份「世界副本」时跳回本体, 否则那里点出来的经度会是 473.9 这种值。
 const map = L.map('map', { worldCopyJump: true }).setView([lat, lon], 13);
 const tiles = {
-  satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {maxZoom:19, attribution:'ArcGIS'}),
-  wgs84: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {maxZoom:19, attribution:'ArcGIS WGS84'}),
-  standard: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom:19, attribution:'\u00a9 OSM'}),
-  dark: L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {maxZoom:19, attribution:'\u00a9 Carto'}),
-  amap: L.tileLayer('https://webst0{s}.is.autonavi.com/appmaptile?style=6&x={x}&y={y}&z={z}', {maxZoom:18, subdomains:'1234', attribution:'\u00a9 高德'}),
-  voyager: L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {maxZoom:19, attribution:'\u00a9 Carto'})
+  satellite: L.tileLayer('https://webst0{s}.is.autonavi.com/appmaptile?style=6&x={x}&y={y}&z={z}', {maxZoom:18, subdomains:'1234', attribution:'\u00a9 高德'}),
+  amap: L.tileLayer('https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=2&style=8&x={x}&y={y}&z={z}', {maxZoom:18, subdomains:'1234', attribution:'\u00a9 高德'}),
+  tdt: L.layerGroup([
+    L.tileLayer('https://t{s}.tianditu.gov.cn/vec_w/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=vec&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&tk=ba633f5fc1494c7e40f3f6af15481a86', {maxZoom:18, subdomains:'01234567', attribution:'\u00a9 \u5929\u5730\u56fe'}),
+    L.tileLayer('https://t{s}.tianditu.gov.cn/cva_w/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=cva&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&tk=ba633f5fc1494c7e40f3f6af15481a86', {maxZoom:18, subdomains:'01234567'})
+  ]),
+  dark: L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {maxZoom:19, attribution:'\u00a9 Carto'})
 };
-let currentLayer = tiles.satellite;
+let currentLayer = tiles.amap;
 currentLayer.addTo(map);
 function switchLayer(name) {
   map.removeLayer(currentLayer);
   currentLayer = tiles[name];
   currentLayer.addTo(map);
-  layerIsGcj = (name === 'amap');
+  layerIsGcj = (name === 'amap' || name === 'satellite');
   // 底图坐标系变了, 同一个 WGS84 点对应的屏幕位置也就变了, marker 必须重摆,
   // 否则切换图层后它会停在旧图源的像素位置上, 看起来像是坐标被改掉了。
   const d = toDisplay(lat, lon);
