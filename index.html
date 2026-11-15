@@ -777,6 +777,8 @@ function switchLayer(name) {
 }
 let marker = L.marker([toDisplay(lat, lon).lat, toDisplay(lat, lon).lon], {draggable:true}).addTo(map);
 marker.on('dragend', e => { const p=e.target.getLatLng(); setPosFromDisplay(p.lat, p.lng); });
+/* 图钉换成 kdns.fr 同款蓝宝石光点 + 呼吸圈（无论标记如何创建，统一替换） */
+try{ var __pk = window.__pkV; if(__pk && __pk.icon){ map.eachLayer(function(l){ if(l && l instanceof L.Marker && l.setIcon) l.setIcon(__pk.icon); }); } }catch(e){}
 map.on('click', e => { setPosFromDisplay(e.latlng.lat, e.latlng.lng); });
 
 function setPosFromDisplay(dLat, dLon) {
